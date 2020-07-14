@@ -5,11 +5,10 @@ description: Jira Ticketing System
       
 nodes:
 - count: 1
-  cloudlets: 14
-  nodeType: javaengine
-  nodeGroup: cp
+  cloudlets: 10
+  nodeType: centos7
+  nodeGroup: vds
   extip: false
-  startService: false
 
 onInstall:
   - downloadJira
@@ -17,14 +16,13 @@ onInstall:
     
 actions:
   downloadJira:
-    cmd [cp]: |-
-      wget -qO /home/jelastic/jira.bin https://product-downloads.atlassian.com/software/jira/downloads/atlassian-jira-core-8.10.0-x64.bin
-      chmod a+x jira.bin
-    
+    cmd [centos7]: |-
+      wget -qO /root/jira.bin https://product-downloads.atlassian.com/software/jira/downloads/atlassian-jira-core-8.10.0-x64.bin
+      chmod a+x /root/jira.bin
   setupJira:
-    cmd [cp]: |-
+    cmd [centos7]: |-
       expect -c '
-      spawn /home/jelastic/jira.bin
+      spawn /root/jira.bin
       expect "For more info, see https://confluence.atlassian.com/x/PRCEOQ"
       send "y\r"
       expect "OK \[o, Enter\], Cancel \[c\]"
@@ -37,8 +35,7 @@ actions:
       send "\r"
       expect eof
       '
-    user: root
-    
+
 startPage: http://${env.domain}
 
 success: |
