@@ -1,5 +1,4 @@
-Start using it at: https://${env.domain}
-**Jira application**: [https://${env.domain}](https://${env.domain})   
+**Jira Software application**: [https://${env.domain}](https://${env.domain})   
 
 The instructions below can help you with further managing your Jira tracking system:
 
