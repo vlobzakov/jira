@@ -4,6 +4,8 @@ id: jira-software
 name: Jira
 logo: /images/jira-logo-inverse.png
 baseUrl: https://raw.githubusercontent.com/vlobzakov/jira/master
+description: JIRA is a project management software. Your team members can use JIRA to plan, track, and release effective software. You can create problem histories, plan sprints, and assign tasks to your teammates.
+short: Jira ticketing system
 
 categories:
 - apps/dev-and-admin-tools
