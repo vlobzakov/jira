@@ -1,45 +1,31 @@
 type: install
-version: 1.5
-name: Jira Install
-description: Jira Ticketing System
-      
+appVersion: latest
+id: jira-software
+name: Jira
+
+categories:
+- apps/dev-and-admin-tools
+
+description:
+  text: Jira Software Docker
+  short: Jira Software Docker
+
+ssl: true
+
 nodes:
-- count: 1
-  cloudlets: 14
-  nodeType: javaengine
+- cloudlets: 16
   nodeGroup: cp
-  extip: false
-  startService: false
+  image: atlassian/jira-software:latest
 
-onInstall:
-  - downloadJira
-  - setupJira
-    
-actions:
-  downloadJira:
-    cmd [cp]: |-
-      wget -qO /home/jelastic/jira.bin https://product-downloads.atlassian.com/software/jira/downloads/atlassian-jira-core-8.10.0-x64.bin
-      chmod a+x jira.bin
-    
-  setupJira:
-    cmd [cp]: |-
-      expect -c '
-      spawn /home/jelastic/jira.bin
-      expect "For more info, see https://confluence.atlassian.com/x/PRCEOQ"
-      send "y\r"
-      expect "OK \[o, Enter\], Cancel \[c\]"
-      send "\r"
-      expect "Express Install (use default settings) \[1\], Custom Install (recommended for advanced users) \[2, Enter\], Upgrade an existing Jira installation \[3\]" 
-      send "1\r"
-      expect "Install \[i, Enter\], Exit \[e\]"
-      send "\r"
-      expect "Yes \[y, Enter\], No \[n\]"
-      send "\r"
-      expect eof
-      '
-    user: root
-    
-startPage: http://${env.domain}
+- cloudlets: 12
+  nodeType: mysql
+  count: 1
 
-success: |
-     ### Jira is installed 
+- cloudlets: 8
+  nodeType: nginx
+  nodeGroup: bl
+  count: 1
+  
+start_page: https://${env.domain}
+  
+success: /texts/success.md
