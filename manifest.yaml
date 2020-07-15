@@ -2,6 +2,8 @@ type: install
 appVersion: latest
 id: jira-software
 name: Jira
+logo: /images/jira-logo.png
+baseUrl: https://raw.githubusercontent.com/vlobzakov/jira/master
 
 categories:
 - apps/dev-and-admin-tools
