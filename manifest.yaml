@@ -36,7 +36,7 @@ actions:
       expect eof
       '
 
-startPage: http://${env.domain}
+startPage: http://${env.domain}:8080
 
 success: |
      ### Jira is installed 
