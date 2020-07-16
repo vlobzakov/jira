@@ -14,20 +14,42 @@ description:
 
 ssl: true
 
+globals:
+  DB_NAME: jiradb  
+  
 nodes:
 - cloudlets: 16
   nodeGroup: cp
   image: atlassian/jira-software:8.10
 
 - cloudlets: 12
-  nodeType: mysql
+  nodeType: postgresql
   count: 1
 
 - cloudlets: 8
   nodeType: nginx
   nodeGroup: bl
   count: 1
-  
+
+onInstall:
+  cmd[${nodes.sqldb.master.id}]: PGPASSWORD=${nodes.sqldb.password} psql -Uwebadmin postgres -c "create database ${globals.DB_NAME};"
+         
 start_page: https://${env.domain}
   
-success: /texts/success.md
+success: |
+  **Jira Software application**: [https://${env.domain}](https://${env.domain})  
+  
+  Database access credentials:    
+  **Hostname**: node${nodes.sqldb.master.id}-${env.domain}  
+  **Username**: webadmin  
+  **Password**: ${nodes.sqldb.password}  
+  **Database name**: ${globals.DB_NAME} 
+  
+  The instructions below can help you with further managing your Jira tracking system:
+
+  * [Attach Public IP](https://docs.jelastic.com/public-ip)
+  * [Bind custom domain](https://docs.jelastic.com/custom-domains/#configure-dns)
+  * [Share access to the environment](http://docs.jelastic.com/share-environment)
+  * [Adjust automatic vertical scaling settings](http://docs.jelastic.com/automatic-vertical-scaling)
+  * [Monitor the statistics](http://docs.jelastic.com/view-app-statistics) & [view log files](https://docs.jelastic.com/view-log-files)
+  * [Access environment via SSH](https://docs.jelastic.com/ssh-access)
