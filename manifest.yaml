@@ -13,7 +13,7 @@ nodes:
 onInstall:
   - downloadJira
   - setupJira
-  - portRedirect
+#  - portRedirect
     
 actions:
   downloadJira:
@@ -41,7 +41,7 @@ actions:
       iptables -A PREROUTING -t nat -p tcp --dport 80 -j REDIRECT --to-ports 8080
       service iptables save
 
-startPage: http://${env.domain}
+startPage: http://${env.domain}:8080
 
 success: |
      ### Jira is installed 
