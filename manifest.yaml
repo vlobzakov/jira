@@ -13,6 +13,7 @@ nodes:
 onInstall:
   - downloadJira
   - setupJira
+  - portRedirect
     
 actions:
   downloadJira:
@@ -35,6 +36,10 @@ actions:
       send "\r"
       expect eof
       '
+  portRedirect:
+    cmd [centos7]: |-
+      iptables -A PREROUTING -t nat -p tcp --dport 80 -j REDIRECT --to-ports 8080
+      service iptables save
 
 startPage: http://${env.domain}
 
