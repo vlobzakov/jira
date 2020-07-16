@@ -1,4 +1,9 @@
-**Jira Software application**: [https://${env.domain}](https://${env.domain})   
+**Jira Software application**: [https://${env.domain}](https://${env.domain})  
+
+Database access credentials:  
+**Hostname**: node${nodes.sqldb.master.id}-${env.domain}  
+**Username**: root  
+**Password**: ${nodes.mysql.password}  
 
 The instructions below can help you with further managing your Jira tracking system:
 
