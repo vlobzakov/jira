@@ -2,7 +2,12 @@ type: install
 version: 1.5
 name: Jira Install
 description: Jira Ticketing System
-      
+
+globals:
+  DB_NAME: jiradb
+  
+ssl: true
+  
 nodes:
 - count: 1
   cloudlets: 14
@@ -10,36 +15,59 @@ nodes:
   nodeGroup: cp
   extip: false
   startService: false
+  
+- cloudlets: 12
+  nodeType: postgresql
+  count: 1
 
 onInstall:
   - downloadJira
+  - fontconfigInstall
   - setupJira
+  - createDB
     
 actions:
   downloadJira:
     cmd [cp]: |-
-      wget -qO /home/jelastic/jira.bin https://product-downloads.atlassian.com/software/jira/downloads/atlassian-jira-core-8.10.0-x64.bin
+      wget -qO /home/jelastic/jira.bin https://product-downloads.atlassian.com/software/jira/downloads/atlassian-jira-software-8.11.0-x64.bin
       chmod a+x jira.bin
-    
+      
+  fontconfigInstall:
+    cmd [cp]: |-
+      yum install -y fontconfig
+      yum install -y dejavu-sans-fonts
+    user: root
+     
   setupJira:
     cmd [cp]: |-
+      exp_internal 1
       expect -c '
       spawn /home/jelastic/jira.bin
-      expect "For more info, see https://confluence.atlassian.com/x/PRCEOQ"
-      send "y\r"
       expect "OK \[o, Enter\], Cancel \[c\]"
-      send "\r"
+      send "o\r"
       expect "Express Install (use default settings) \[1\], Custom Install (recommended for advanced users) \[2, Enter\], Upgrade an existing Jira installation \[3\]" 
       send "1\r"
       expect "Install \[i, Enter\], Exit \[e\]"
-      send "\r"
+      send "i\r"
+      sleep 20
       expect "Yes \[y, Enter\], No \[n\]"
-      send "\r"
+      send "y\r"
+      sleep 10
       expect eof
       '
     user: root
-    
-startPage: http://${env.domain}
+  
+  createDB:
+      cmd[${nodes.sqldb.master.id}]: PGPASSWORD=${nodes.sqldb.password} psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.DB_NAME} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
+
+startPage: https://${env.domain}
 
 success: |
-     ### Jira is installed 
+  **Jira Software application**: [https://${env.domain}](https://${env.domain})  
+  
+  Database access credentials:    
+  **Hostname**: node${nodes.sqldb.master.id}-${env.domain}  
+  **Username**: webadmin  
+  **Password**: ${nodes.sqldb.password}  
+  **Database name**: ${globals.DB_NAME} 
+  
