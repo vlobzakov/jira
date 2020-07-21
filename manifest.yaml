@@ -17,7 +17,7 @@ ssl: true
 nodes:
 - cloudlets: 16
   nodeGroup: cp
-  image: atlassian/jira-software:8.10
+  image: atlassian/jira-software:8.11
 
 - cloudlets: 12
   nodeType: mysql
