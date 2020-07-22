@@ -13,7 +13,13 @@ description:
   short: Jira Ticketing System
 
 settings:
+  
   fields:
+  - type: checkbox
+    caption: External Database. Recommended for production mode.
+    name: bd
+    value: true
+    hideLabel: false
   - name: jiraversion
     type: radio-fieldset
     values:
@@ -26,7 +32,7 @@ globals:
   version: ${settings.jiraversion}
   
 ssl: true
-  
+
 nodes:
 - count: 1
   cloudlets: 20
@@ -34,18 +40,28 @@ nodes:
   nodeGroup: cp
   extip: false
   startService: false
-  
-- cloudlets: 12
-  nodeType: postgresql
-  count: 1
 
 onInstall:
+  - if ('${settings.bd}' == 'true'): 
+      - addDBnode
+      - setGlobals:
+          success: success-w-db.md
+    elif ('${settings.bd}' == 'false'): 
+      - setGlobals:
+          success: success-no-db.md
   - downloadJira
   - fontconfigInstall
   - setupJira
   - createDB
     
 actions:
+  addDBnode:
+    - addNodes:
+      cloudlets: 12
+      nodeType: postgresql
+      count: 1
+  
+
   downloadJira:
     - if ('${globals.version}' == 'long-term-support'):
         cmd [cp]: |-
@@ -82,7 +98,6 @@ actions:
   
   createDB:
       cmd[${nodes.sqldb.master.id}]: PGPASSWORD=${nodes.sqldb.password} psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.DB_NAME} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
-
 startPage: https://${env.domain}
   
-success: /texts/success.md
+success: /texts/${globals.success}
