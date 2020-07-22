@@ -63,7 +63,7 @@ actions:
         nodeGroup: sqldb
         nodeType: postgresql
         count: 1
-  
+ 
 
   downloadJira:
     - if ('${globals.versionJIRA}' == 'long-term-support'):
@@ -100,9 +100,10 @@ actions:
     user: root
   
   createDB:
-     - cmd[${nodes.sqldb.master.id}]: PGPASSWORD=${nodes.sqldb.password} psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.DB_NAME} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;\
-     CREATE USER ${globals.DB_USER} WITH ENCRYPTED PASSWORD ${globals.DB_PASSWD};\
-     GRANT ALL PRIVILEGES ON DATABASE ${globals.DB_NAME} TO ${globals.DB_USER};"
+     - cmd[${nodes.sqldb.master.id}]: 
+         psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.DB_NAME} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
+         psql -Uwebadmin postgres -c "CREATE USER ${globals.DB_USER} WITH ENCRYPTED PASSWORD '${globals.DB_PASSWD}';"
+         psql -Uwebadmin postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${globals.DB_NAME} TO ${globals.DB_USER};"
 
 startPage: https://${env.domain}
   
