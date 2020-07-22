@@ -17,7 +17,7 @@ settings:
   fields:
   - type: checkbox
     caption: External Database. Recommended for production mode.
-    name: bd
+    name: db
     value: true
     hideLabel: false
   - name: jiraversion
@@ -42,11 +42,11 @@ nodes:
   startService: false
 
 onInstall:
-  - if ('${settings.bd}' == 'true'): 
+  - if ('${settings.db}' == 'true'): 
       - addDBnode
       - setGlobals:
           success: success-w-db.md
-    elif ('${settings.bd}' == 'false'): 
+    elif ('${settings.db}' == 'false'): 
       - setGlobals:
           success: success-no-db.md
   - downloadJira
