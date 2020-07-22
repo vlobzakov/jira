@@ -9,25 +9,80 @@ categories:
 - apps/dev-and-admin-tools
 
 description:
-  text: JIRA is a project management software. Your team members can use JIRA to plan, track, and release effective software. You can create problem histories, plan sprints, and assign tasks to your teammates.
-  short: Jira ticketing system
+  text: /texts/description.md
+  short: Jira Ticketing System
 
-ssl: true
-
-nodes:
-- cloudlets: 16
-  nodeGroup: cp
-  image: atlassian/jira-software:8.10
-
-- cloudlets: 12
-  nodeType: mysql
-  count: 1
-
-- cloudlets: 8
-  nodeType: nginx
-  nodeGroup: bl
-  count: 1
+settings:
+  fields:
+  - name: jiraversion
+    type: radio-fieldset
+    values:
+      long-term-support: Latest <a href="https://confluence.atlassian.com/enterprise/atlassian-enterprise-releases-948227420.html">Long Term Support</a> release 8.5.6
+      latest: Latest release 8.11.0
+    default: latest
+    
+globals:
+  DB_NAME: jiradb
+  version: ${settings.jiraversion}
   
-start_page: https://${env.domain}
+ssl: true
+  
+nodes:
+- count: 1
+  cloudlets: 20
+  nodeType: javaengine
+  nodeGroup: cp
+  extip: false
+  startService: false
+  
+- cloudlets: 12
+  nodeType: postgresql
+  count: 1
+
+onInstall:
+  - downloadJira
+  - fontconfigInstall
+  - setupJira
+  - createDB
+    
+actions:
+  downloadJira:
+    - if ('${globals.version}' == 'long-term-support'):
+        cmd [cp]: |-
+          wget -qO /home/jelastic/jira.bin https://product-downloads.atlassian.com/software/jira/downloads/atlassian-jira-software-8.5.6-x64.bin
+    - if ('${globals.version}' == 'latest'):
+        cmd [cp]: |-
+          wget -qO /home/jelastic/jira.bin https://product-downloads.atlassian.com/software/jira/downloads/atlassian-jira-software-8.11.0-x64.bin
+      
+  fontconfigInstall:
+    cmd [cp]: |-
+      chmod a+x /home/jelastic/jira.bin
+      yum install -y fontconfig
+      yum install -y dejavu-sans-fonts
+    user: root
+     
+  setupJira:
+    cmd [cp]: |-
+      exp_internal 1
+      expect -c '
+      spawn /home/jelastic/jira.bin
+      expect "OK \[o, Enter\], Cancel \[c\]"
+      send "o\r"
+      expect "Express Install (use default settings) \[1\], Custom Install (recommended for advanced users) \[2, Enter\], Upgrade an existing Jira installation \[3\]" 
+      send "1\r"
+      expect "Install \[i, Enter\], Exit \[e\]"
+      send "i\r"
+      sleep 20
+      expect "Yes \[y, Enter\], No \[n\]"
+      send "y\r"
+      sleep 10
+      expect eof
+      '
+    user: root
+  
+  createDB:
+      cmd[${nodes.sqldb.master.id}]: PGPASSWORD=${nodes.sqldb.password} psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.DB_NAME} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
+
+startPage: https://${env.domain}
   
 success: /texts/success.md
