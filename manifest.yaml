@@ -11,7 +11,7 @@ categories:
 description:
   text: /texts/description.md
   short: Jira Ticketing System
-
+  
 settings:
   
   fields:
@@ -30,6 +30,7 @@ settings:
 globals:
   DB_NAME: jiradb
   version: ${settings.jiraversion}
+  DB_PASSWD: ${fn.password}
   
 ssl: true
 
@@ -97,9 +98,8 @@ actions:
     user: root
   
   createDB:
-     - cmd[${nodes.sqldb.master.id}]: PGPASSWORD=${nodes.sqldb.password} psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.DB_NAME} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
-     - setGlobals:
-         db-password: ${nodes.sqldb.password}
+     - cmd[$nodes.sqldb.master.id]: jem setpasswd -p ${globals.DB_PASSWD}
+     - cmd[${nodes.sqldb.master.id}]: PGPASSWORD=${globals.DB_PASSWD} psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.DB_NAME} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
 
 startPage: https://${env.domain}
   
