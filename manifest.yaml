@@ -29,7 +29,9 @@ settings:
     
 globals:
   DB_NAME: jiradb
-  version: ${settings.jiraversion}
+  DB_USER: jadmin
+  DB_PASSWD: ${fn.password}
+  versionJIRA: ${settings.jiraversion}
   
 ssl: true
 
@@ -64,10 +66,10 @@ actions:
   
 
   downloadJira:
-    - if ('${globals.version}' == 'long-term-support'):
+    - if ('${globals.versionJIRA}' == 'long-term-support'):
         cmd [cp]: |-
           wget -qO /home/jelastic/jira.bin https://product-downloads.atlassian.com/software/jira/downloads/atlassian-jira-software-8.5.6-x64.bin
-    - if ('${globals.version}' == 'latest'):
+    - if ('${globals.versionJIRA}' == 'latest'):
         cmd [cp]: |-
           wget -qO /home/jelastic/jira.bin https://product-downloads.atlassian.com/software/jira/downloads/atlassian-jira-software-8.11.0-x64.bin
       
@@ -98,7 +100,9 @@ actions:
     user: root
   
   createDB:
-     - cmd[${nodes.sqldb.master.id}]: PGPASSWORD=${nodes.sqldb.password} psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.DB_NAME} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
+     - cmd[${nodes.sqldb.master.id}]: PGPASSWORD=${nodes.sqldb.password} psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.DB_NAME} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;\
+     CREATE USER ${globals.DB_USER} WITH ENCRYPTED PASSWORD ${globals.DB_PASSWD};\
+     GRANT ALL PRIVILEGES ON DATABASE ${globals.DB_NAME} TO ${globals.DB_USER};"
 
 startPage: https://${env.domain}
   
