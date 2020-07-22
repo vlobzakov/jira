@@ -1,0 +1,7 @@
+type: install
+nodes:
+  
+- cloudlets: 12
+  nodeType: postgresql
+  count: 1
+
