@@ -2,7 +2,7 @@ type: install
 appVersion: latest
 id: jira-software
 name: Jira Project & Issue Tracking System
-logo: /images/jira-logo-inverse.png
+logo: /images/jira-logo-new.png
 baseUrl: https://raw.githubusercontent.com/vlobzakov/jira/master
 
 categories:
