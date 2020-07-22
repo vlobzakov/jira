@@ -97,7 +97,9 @@ actions:
     user: root
   
   createDB:
-      cmd[${nodes.sqldb.master.id}]: PGPASSWORD=${nodes.sqldb.password} psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.DB_NAME} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
+     - cmd[${nodes.sqldb.master.id}]: PGPASSWORD=${nodes.sqldb.password} psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.DB_NAME} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
+     - setGlobals:
+         db-password: ${nodes.sqldb.password}
 
 startPage: https://${env.domain}
   
