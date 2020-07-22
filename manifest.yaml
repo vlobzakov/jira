@@ -57,9 +57,9 @@ onInstall:
 actions:
   addDBnode:
     - addNodes:
-      cloudlets: 12
-      nodeType: postgresql
-      count: 1
+        cloudlets: 12
+        nodeType: postgresql
+        count: 1
   
 
   downloadJira:
@@ -98,6 +98,7 @@ actions:
   
   createDB:
       cmd[${nodes.sqldb.master.id}]: PGPASSWORD=${nodes.sqldb.password} psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.DB_NAME} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
+
 startPage: https://${env.domain}
   
 success: /texts/${globals.success}
