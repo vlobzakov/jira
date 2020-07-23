@@ -23,7 +23,7 @@ nodes:
   image: atlassian/jira-software:8.10
 
 - cloudlets: 12
-  nodeType: postgresql11
+  nodeType: postgres11
   count: 1
 
 - cloudlets: 8
