@@ -37,7 +37,7 @@ ssl: true
 
 nodes:
 - count: 1
-  cloudlets: 20
+  cloudlets: 24
   nodeType: javaengine
   nodeGroup: cp
   extip: false
