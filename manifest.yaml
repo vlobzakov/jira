@@ -18,7 +18,7 @@ globals:
   DB_NAME: jiradb  
   
 nodes:
-- cloudlets: 16
+- cloudlets: 22
   nodeGroup: cp
   image: atlassian/jira-software:8.10
 
