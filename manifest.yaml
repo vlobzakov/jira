@@ -43,6 +43,11 @@ nodes:
   extip: false
   startService: false
   startServiceOnCreation: false
+- count: 1
+  cloudlets: 4
+  nodeGroup: bl
+  nodeType: nginx
+  extip: true
 
 onInstall:
   - if ('${settings.db}' == 'true'): 
@@ -56,6 +61,7 @@ onInstall:
   - fontconfigInstall
   - setupJira
   - createDB
+  - proxyConfigure
     
 actions:
   addDBnode:
@@ -100,6 +106,11 @@ actions:
       '
     user: root
   
+  proxyConfigure:
+    cmd[cp]:
+      chmod a+w /opt/atlassian/jira/conf/server.xml
+#  Изменить server.xml(из манифеста добавить поля secure="true" scheme="https" proxyPort="443"/> и вручную кастомный домен proxyName="jirateam.jele.website"
+# RESTART Jira нужно делать от юзера jira $/etc/init.d/jira restart
   createDB:
      - cmd[${nodes.sqldb.master.id}]: 
          psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.DB_NAME} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
