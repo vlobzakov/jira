@@ -11,27 +11,53 @@ categories:
 description:
   text: /texts/description.md
   short: Jira Ticketing System
-  
+
 settings:
-  
   fields:
-  - type: checkbox
-    caption: External Database. Recommended for production mode.
-    name: db
-    value: true
-    hideLabel: false
-  - name: jiraversion
-    type: radio-fieldset
-    values:
-      long-term-support: Latest <a href="https://confluence.atlassian.com/enterprise/atlassian-enterprise-releases-948227420.html">Long Term Support</a> release 8.5.6
-      latest: Latest release 8.11.0
-    default: latest
-    
+    - name: jira_url
+      caption: Jira Version
+      type: list
+      required: true
+      values: []
+      hidden: false
+    - type: displayfield
+    - type: checkbox
+      caption: External Database. Recommended for production mode.
+      name: db
+      value: true
+      hideLabel: false
+  
+onBeforeInit: |  
+  var values = jps.settings.fields[0].values;
+
+  function getVersions(edition, url) {
+      var body = toNative(new com.hivext.api.core.utils.Transport().get(url));
+      var arr = eval(body.substring(10, body.length - 1)); 
+      
+      for (var i in arr) {
+        if (arr[i].edition == edition && arr[i].platform == "Unix") {
+          if (edition == "Standard") { caption = "Latest" } else { caption = "Long Term Support" }
+          values.push({ caption: caption, value: arr[i].zipUrl });            
+          break;
+        }
+      }
+  }
+  
+  getVersions("Standard",  "https://my.atlassian.com/download/feeds/current/jira-software.json");
+  getVersions("Enterprise", "https://my.atlassian.com/download/feeds/archived/jira-software.json");
+
+  if (values.length > 0) {  
+    return jps;    
+  } else {
+    return {result: 1099, error:"can't determine latest or lts version", versions: values };
+  }
+  
 globals:
   DB_NAME: jiradb
   DB_USER: jadmin
   DB_PASSWD: ${fn.password}
-  versionJIRA: ${settings.jiraversion}
+  serverConfig: /opt/atlassian/jira/conf/server.xml
+
   
 ssl: true
 
@@ -40,7 +66,7 @@ nodes:
   cloudlets: 24
   nodeType: javaengine
   nodeGroup: cp
-  extip: false
+  extip: true
   startService: false
   startServiceOnCreation: false
 - count: 1
@@ -52,6 +78,7 @@ nodes:
 onInstall:
   - if ('${settings.db}' == 'true'): 
       - addDBnode
+      - createDB
       - setGlobals:
           success: success-w-db.md
     elif ('${settings.db}' == 'false'): 
@@ -60,7 +87,6 @@ onInstall:
   - downloadJira
   - fontconfigInstall
   - setupJira
-  - createDB
   - proxyConfigure
     
 actions:
@@ -73,12 +99,8 @@ actions:
  
 
   downloadJira:
-    - if ('${globals.versionJIRA}' == 'long-term-support'):
         cmd [cp]: |-
-          wget -qO /home/jelastic/jira.bin https://product-downloads.atlassian.com/software/jira/downloads/atlassian-jira-software-8.5.6-x64.bin
-    - if ('${globals.versionJIRA}' == 'latest'):
-        cmd [cp]: |-
-          wget -qO /home/jelastic/jira.bin https://product-downloads.atlassian.com/software/jira/downloads/atlassian-jira-software-8.11.0-x64.bin
+          wget -qO /home/jelastic/jira.bin ${settings.jira_url}
       
   fontconfigInstall:
     cmd [cp]: |-
@@ -108,7 +130,11 @@ actions:
   
   proxyConfigure:
     cmd[cp]:
-      chmod a+w /opt/atlassian/jira/conf/server.xml
+      chmod a+w ${globals.serverConfig};
+      sed -i "s|bindOnInit=\"false\"|bindOnInit=\"false\" secure=\"true\" scheme=\"https\" proxyName=\"${env.domain}\" proxyPort=\"443\"|g" ${globals.serverConfig};
+      runuser -l jira -c '/etc/init.d/jira stop';
+      runuser -l jira -c '/etc/init.d/jira start';
+    user: root
 #  Изменить server.xml(из манифеста добавить поля secure="true" scheme="https" proxyPort="443"/> и вручную кастомный домен proxyName="jirateam.jele.website"
 # RESTART Jira нужно делать от юзера jira $/etc/init.d/jira restart
   createDB:
