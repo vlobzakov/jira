@@ -56,25 +56,21 @@ settings:
         hideLabel: false
   config:
     fields:
-      - name: displayfield
-        type: displayfield
-        hideLabel: true
-        markup: Enter proxy parameters requested in Jira Admin Panel
       - name: scheme
         caption: scheme
         type: string
         default: https
-        width: 250
+        width: 400
       - name: proxy_name
         caption: proxyName
         type: string
         vtype: extdomain
-        width: 250
+        width: 400
       - name: proxy_port
         caption: proxyPort
         type: string
         default: 443
-        width: 250
+        width: 400
 
  
 globals:
@@ -174,9 +170,9 @@ addons:
     description: You can change connector partameters. 
     buttons:    
       - confirmText: Are you sure you want to proceed?
-        loadingText: Jira Service Restart
+        loadingText: Jira Service Restarting
         action: restartJira
-        caption: Restart
+        caption: Restart Jira
         successText: Jira was restarted successfully!
         title: Please restart Jira Software if necessary
       - confirmText: Are you sure you want to proceed?
@@ -185,7 +181,7 @@ addons:
         caption: Change
         successText: The parameters have been updated successfully!
         settings: config
-        title: Please specify the new domain name 
+        title: Enter reverse proxy parameters requested in Jira Admin Panel
         
     actions:
       changeParams:
