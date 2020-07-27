@@ -64,15 +64,17 @@ settings:
         caption: scheme
         type: string
         default: https
+        width: 250
       - name: proxy_name
-        hideLabel: true
         caption: proxyName
         type: string
         vtype: extdomain
+        width: 250
       - name: proxy_port
         caption: proxyPort
         type: string
         default: 443
+        width: 250
 
  
 globals:
@@ -190,9 +192,9 @@ addons:
         - cmd[cp]: |-
             chmod a+w ${globals.serverConfig};
             wget -qO ${globals.serverConfig} ${globals.server-proxy-https-config}
-            sed -i 's/proxyName=\"[^\"+]*\"/proxyName=\"${settings.config.proxy_name}\"/' ${globals.serverConfig}
-            sed -i 's/proxyPort=\"[^\"+]*\"/proxyPort=\"${settings.config.proxy_port}\"/' ${globals.serverConfig}
-            sed -i 's/proxyName=\"[^\"+]*\"/proxyName=\"${settings.config.scheme}\"/' ${globals.serverConfig}
+            sed -i 's/proxyName=\"[^\"+]*\"/proxyName=\"${settings.proxy_name}\"/' ${globals.serverConfig}
+            sed -i 's/proxyPort=\"[^\"+]*\"/proxyPort=\"${settings.proxy_port}\"/' ${globals.serverConfig}
+            sed -i 's/scheme=\"[^\"+]*\"/scheme=\"${settings.scheme}\"/' ${globals.serverConfig}
           user: root
         - restartJira
           
