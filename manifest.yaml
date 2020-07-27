@@ -12,23 +12,9 @@ description:
   text: /texts/description.md
   short: Jira Ticketing System
 
-settings:
-  fields:
-    - name: jira_url
-      caption: Jira Version
-      type: list
-      required: true
-      values: []
-      hidden: false
-    - type: displayfield
-    - type: checkbox
-      caption: External Database. Recommended for production mode.
-      name: db
-      value: true
-      hideLabel: false
-  
+ 
 onBeforeInit: |  
-  var values = jps.settings.fields[0].values;
+  var values = jps.settings.main.fields[0].values;
 
   function getVersions(edition, url) {
       var body = toNative(new com.hivext.api.core.utils.Transport().get(url));
@@ -51,12 +37,50 @@ onBeforeInit: |
   } else {
     return {result: 1099, error:"can't determine latest or lts version", versions: values };
   }
-  
+
+
+settings:
+  main:
+    fields:
+      - name: jira_url
+        caption: Jira Version
+        type: list
+        required: true
+        values: []
+        hidden: false
+      - type: displayfield
+      - type: checkbox
+        caption: External Database. Recommended for production mode.
+        name: db
+        value: true
+        hideLabel: false
+  config:
+    fields:
+      - name: displayfield
+        type: displayfield
+        hideLabel: true
+        markup: Enter proxy parameters requested in Jira Admin Panel
+      - name: scheme
+        caption: scheme
+        type: string
+        default: https
+      - name: proxy_name
+        hideLabel: true
+        caption: proxyName
+        type: string
+        vtype: extdomain
+      - name: proxy_port
+        caption: proxyPort
+        type: string
+        default: 443
+
+ 
 globals:
   DB_NAME: jiradb
   DB_USER: jadmin
   DB_PASSWD: ${fn.password}
   serverConfig: /opt/atlassian/jira/conf/server.xml
+  server-proxy-https-config: https://raw.githubusercontent.com/vlobzakov/jira/master/jira-connector/server-proxy-https.xml
 
   
 ssl: true
@@ -66,9 +90,10 @@ nodes:
   cloudlets: 24
   nodeType: javaengine
   nodeGroup: cp
-  extip: true
+  extip: false
   startService: false
   startServiceOnCreation: false
+  addons: jira-config-update
 - count: 1
   cloudlets: 4
   nodeGroup: bl
@@ -78,7 +103,6 @@ nodes:
 onInstall:
   - if ('${settings.db}' == 'true'): 
       - addDBnode
-      - createDB
       - setGlobals:
           success: success-w-db.md
     elif ('${settings.db}' == 'false'): 
@@ -87,7 +111,11 @@ onInstall:
   - downloadJira
   - fontconfigInstall
   - setupJira
+  - createDB
   - proxyConfigure
+  - installAddon:
+      id: jira-config-update
+      nodeGroup: cp    
     
 actions:
   addDBnode:
@@ -97,7 +125,6 @@ actions:
         nodeType: postgresql
         count: 1
  
-
   downloadJira:
         cmd [cp]: |-
           wget -qO /home/jelastic/jira.bin ${settings.jira_url}
@@ -130,18 +157,52 @@ actions:
   
   proxyConfigure:
     cmd[cp]:
-      chmod a+w ${globals.serverConfig};
-      sed -i "s|bindOnInit=\"false\"|bindOnInit=\"false\" secure=\"true\" scheme=\"https\" proxyName=\"${env.domain}\" proxyPort=\"443\"|g" ${globals.serverConfig};
-      runuser -l jira -c '/etc/init.d/jira stop';
-      runuser -l jira -c '/etc/init.d/jira start';
+      chmod a+w /opt/atlassian/jira/conf/server.xml
     user: root
-#  Изменить server.xml(из манифеста добавить поля secure="true" scheme="https" proxyPort="443"/> и вручную кастомный домен proxyName="jirateam.jele.website"
-# RESTART Jira нужно делать от юзера jira $/etc/init.d/jira restart
+
   createDB:
      - cmd[${nodes.sqldb.master.id}]: 
          psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.DB_NAME} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
          psql -Uwebadmin postgres -c "CREATE USER ${globals.DB_USER} WITH ENCRYPTED PASSWORD '${globals.DB_PASSWD}';"
          psql -Uwebadmin postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${globals.DB_NAME} TO ${globals.DB_USER};"
+
+addons:
+  - id: jira-config-update
+    name: Connector Configuration
+    description: You can change connector partameters. 
+    buttons:    
+      - confirmText: Are you sure you want to proceed?
+        loadingText: Jira Service Restart
+        action: restartJira
+        caption: Restart
+        successText: Jira was restarted successfully!
+        title: Please restart Jira Software if necessary
+      - confirmText: Are you sure you want to proceed?
+        loadingText: Changing parameters
+        action: changeParams
+        caption: Change
+        successText: The parameters have been updated successfully!
+        settings: config
+        title: Please specify the new domain name 
+        
+    actions:
+      changeParams:
+        - cmd[cp]: |-
+            chmod a+w ${globals.serverConfig};
+            wget -qO ${globals.serverConfig} ${globals.server-proxy-https-config}
+            sed -i 's/proxyName=\"[^\"+]*\"/proxyName=\"${settings.config.proxy_name}\"/' ${globals.serverConfig}
+            sed -i 's/proxyPort=\"[^\"+]*\"/proxyPort=\"${settings.config.proxy_port}\"/' ${globals.serverConfig}
+            sed -i 's/proxyName=\"[^\"+]*\"/proxyName=\"${settings.config.scheme}\"/' ${globals.serverConfig}
+          user: root
+        - restartJira
+          
+      restartJira:
+        - cmd[cp]: |-
+            runuser -l jira -c '/opt/atlassian/jira/bin/stop-jira.sh';
+            sleep 10;
+            runuser -l jira -c '/opt/atlassian/jira/bin/start-jira.sh';
+          user: root
+ 
 
 startPage: https://${env.domain}
   
