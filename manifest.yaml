@@ -2,7 +2,7 @@ type: install
 appVersion: latest
 id: jira-software
 name: Jira Project & Issue Tracking System
-logo: /images/jira-logo-inverse.png
+logo: /images/jira-logo-new.png
 baseUrl: https://raw.githubusercontent.com/vlobzakov/jira/master
 
 categories:
@@ -12,39 +12,122 @@ description:
   text: JIRA is a project management software. Your team members can use JIRA to plan, track, and release effective software. You can create problem histories, plan sprints, and assign tasks to your teammates.
   short: Jira ticketing system
 
+ 
+onBeforeInit: |  
+  var values = jps.settings.main.fields[0].values;
+
+  function getVersions(edition, url) {
+      var body = toNative(new com.hivext.api.core.utils.Transport().get(url));
+      var arr = eval(body.substring(10, body.length - 1)); 
+      
+      for (var i in arr) {
+        if (arr[i].edition == edition && arr[i].platform == "Unix") {
+          if (edition == "Standard") { caption = "Latest" } else { caption = "Long Term Support" }
+      <!--Here we use json files to get jira tags for docker images -->
+          values.push({ caption: caption, value: arr[i].version });   
+      <!-- Use the arr[i].zipUrl to get URL to the application  -->    
+          break;
+        }
+      }
+  }
+  
+  getVersions("Standard",  "https://my.atlassian.com/download/feeds/current/jira-software.json");
+  getVersions("Enterprise", "https://my.atlassian.com/download/feeds/archived/jira-software.json");
+
+  if (values.length > 0) {  
+    return jps;    
+  } else {
+    return {result: 1099, error:"can't determine latest or lts version", versions: values };
+  }
+
+
+settings:
+  main:
+    fields:
+      - name: jira_version
+        caption: Jira Version
+        type: list
+        required: true
+        values: []
+        hidden: false
+      - type: displayfield
+
+  config:
+    fields:
+      - name: scheme
+        caption: scheme
+        type: string
+        default: https
+        width: 400
+      - name: proxy_name
+        caption: proxyName
+        type: string
+        vtype: extdomain
+        width: 400
+      - name: proxy_port
+        caption: proxyPort
+        type: string
+        default: 443
+        width: 400
+
+ 
+globals:
+  DB_NAME: jiradb
+  DB_USER: jadmin
+  DB_PASSWD: ${fn.password}
+#server.xml is created from server.xml.j2 each time container restarted
+  serverConfig: /opt/atlassian/etc/server.xml.j2
+  
 ssl: true
 
-globals:
-  DB_NAME: jiradb  
-  
 nodes:
 - cloudlets: 22
   nodeGroup: cp
-  image: atlassian/jira-software:8.10
+  image: atlassian/jira-software:${settings.jira_version}
 
 - cloudlets: 12
-  nodeType: postgres11
+  nodeGroup: sqldb
+  nodeType: postgresql
   count: 1
 
 onInstall:
-  cmd[${nodes.sqldb.master.id}]: PGPASSWORD=${nodes.sqldb.password} psql -Uwebadmin postgres -c "create database ${globals.DB_NAME};"
-         
-start_page: https://${env.domain}
-  
-success: |
-  **Jira Software application**: [https://${env.domain}](https://${env.domain})  
-  
-  Database access credentials:    
-  **Hostname**: node${nodes.sqldb.master.id}-${env.domain}  
-  **Username**: webadmin  
-  **Password**: ${nodes.sqldb.password}  
-  **Database name**: ${globals.DB_NAME} 
-  
-  The instructions below can help you with further managing your Jira tracking system:
+  - createDB
+  - installAddon:
+      id: jira-config-update
+      nodeGroup: cp    
+    
+actions:
+ 
+  createDB:
+     - cmd[${nodes.sqldb.master.id}]: 
+         psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.DB_NAME} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
+         psql -Uwebadmin postgres -c "CREATE USER ${globals.DB_USER} WITH ENCRYPTED PASSWORD '${globals.DB_PASSWD}';"
+         psql -Uwebadmin postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${globals.DB_NAME} TO ${globals.DB_USER};"
 
-  * [Attach Public IP](https://docs.jelastic.com/public-ip)
-  * [Bind custom domain](https://docs.jelastic.com/custom-domains/#configure-dns)
-  * [Share access to the environment](http://docs.jelastic.com/share-environment)
-  * [Adjust automatic vertical scaling settings](http://docs.jelastic.com/automatic-vertical-scaling)
-  * [Monitor the statistics](http://docs.jelastic.com/view-app-statistics) & [view log files](https://docs.jelastic.com/view-log-files)
-  * [Access environment via SSH](https://docs.jelastic.com/ssh-access)
+addons:
+  - id: jira-config-update
+    name: Connector Configuration
+    description: You can change connector parameters. 
+    buttons:    
+      - confirmText: Are you sure you want to proceed?
+        loadingText: Changing parameters
+        action: changeParams
+        caption: Change proxy parameters
+        successText: The parameters have been updated successfully!
+        settings: config
+        title: Enter reverse proxy parameters
+        
+    actions:
+      changeParams:
+        - cmd[cp]: |-
+            sed -i "s|^\s*scheme\=[^*]*|               scheme\=\"${settings.scheme}\"|g" ${globals.serverConfig};
+            sed -i "s|^\s*proxyName\=[^*]*|               proxyName\=\"${settings.proxy_name}\"|g" ${globals.serverConfig};
+            sed -i "s|^\s*proxyPort\=[^*]*|               proxyPort\=\"settings.proxy_port\"|g" ${globals.serverConfig};
+          user: root
+        - restartContainers:
+            nodeGroup: cp
+ 
+
+startPage: https://node${nodes.cp.master.id}-${env.domain}
+  
+success: /texts/success-w-db.md
