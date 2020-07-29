@@ -26,11 +26,6 @@ nodes:
   nodeType: postgres11
   count: 1
 
-- cloudlets: 8
-  nodeType: nginx
-  nodeGroup: bl
-  count: 1
-
 onInstall:
   cmd[${nodes.sqldb.master.id}]: PGPASSWORD=${nodes.sqldb.password} psql -Uwebadmin postgres -c "create database ${globals.DB_NAME};"
          
