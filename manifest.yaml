@@ -49,11 +49,7 @@ settings:
         values: []
         hidden: false
       - type: displayfield
-      - type: checkbox
-        caption: External Database. Recommended for production mode.
-        name: db
-        value: true
-        hideLabel: false
+
   config:
     fields:
       - name: scheme
@@ -97,15 +93,12 @@ nodes:
   nodeGroup: bl
   nodeType: nginx
   extip: true
+- cloudlets: 12
+  nodeGroup: sqldb
+  nodeType: postgresql
+  count: 1
 
 onInstall:
-  - if ('${settings.db}' == 'true'): 
-      - addDBnode
-      - setGlobals:
-          success: success-w-db.md
-    elif ('${settings.db}' == 'false'): 
-      - setGlobals:
-          success: success-no-db.md
   - downloadJira
   - fontconfigInstall
   - setupJira
@@ -116,12 +109,6 @@ onInstall:
       nodeGroup: cp    
     
 actions:
-  addDBnode:
-    - addNodes:
-        cloudlets: 12
-        nodeGroup: sqldb
-        nodeType: postgresql
-        count: 1
  
   downloadJira:
         cmd [cp]: |-
@@ -204,4 +191,4 @@ addons:
 
 startPage: https://${env.domain}
   
-success: /texts/${globals.success}
+success: /texts/success-w-db.md
