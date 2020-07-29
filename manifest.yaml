@@ -112,7 +112,7 @@ addons:
       - confirmText: Are you sure you want to proceed?
         loadingText: Changing parameters
         action: changeParams
-        caption: Change
+        caption: Change proxy parameters
         successText: The parameters have been updated successfully!
         settings: config
         title: Enter reverse proxy parameters
@@ -120,12 +120,12 @@ addons:
     actions:
       changeParams:
         - cmd[cp]: |-
-            sed -i "s|^\s*scheme\=[^*]*|               scheme\=\"https\"|g" ${settings.scheme};
-            sed -i "s|^\s*proxyName\=[^*]*|               proxyName\=\"${settings.proxy_name}\"|g" ${globals.base-config-file};
-            sed -i "s|^\s*proxyPort\=[^*]*|               proxyPort\=\"settings.proxy_port\"|g" ${globals.base-config-file};
+            sed -i "s|^\s*scheme\=[^*]*|               scheme\=\"${settings.scheme}\"|g" ${globals.serverConfig};
+            sed -i "s|^\s*proxyName\=[^*]*|               proxyName\=\"${settings.proxy_name}\"|g" ${globals.serverConfig};
+            sed -i "s|^\s*proxyPort\=[^*]*|               proxyPort\=\"settings.proxy_port\"|g" ${globals.serverConfig};
           user: root
-        - restartNodes:
-            nodeGrooup: cp
+        - restartContainers:
+            nodeGroup: cp
  
 
 startPage: https://node${nodes.cp.master.id}-${env.domain}
