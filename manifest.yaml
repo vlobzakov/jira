@@ -9,114 +9,125 @@ categories:
 - apps/dev-and-admin-tools
 
 description:
-  text: /texts/description.md
-  short: Jira Ticketing System
+  text: JIRA is a project management software. Your team members can use JIRA to plan, track, and release effective software. You can create problem histories, plan sprints, and assign tasks to your teammates.
+  short: Jira ticketing system
+
+ 
+onBeforeInit: |  
+  var values = jps.settings.main.fields[0].values;
+
+  function getVersions(edition, url) {
+      var body = toNative(new com.hivext.api.core.utils.Transport().get(url));
+      var arr = eval(body.substring(10, body.length - 1)); 
+      
+      for (var i in arr) {
+        if (arr[i].edition == edition && arr[i].platform == "Unix") {
+          if (edition == "Standard") { caption = "Latest" } else { caption = "Long Term Support" }
+      <!--Here we use json files to get jira tags for docker images -->
+          values.push({ caption: caption, value: arr[i].version });   
+      <!-- Use the arr[i].zipUrl to get URL to the application  -->    
+          break;
+        }
+      }
+  }
   
+  getVersions("Standard",  "https://my.atlassian.com/download/feeds/current/jira-software.json");
+  getVersions("Enterprise", "https://my.atlassian.com/download/feeds/archived/jira-software.json");
+
+  if (values.length > 0) {  
+    return jps;    
+  } else {
+    return {result: 1099, error:"can't determine latest or lts version", versions: values };
+  }
+
+
 settings:
-  
-  fields:
-  - type: checkbox
-    caption: External Database. Recommended for production mode.
-    name: db
-    value: true
-    hideLabel: false
-  - name: jiraversion
-    type: radio-fieldset
-    values:
-      long-term-support: Latest <a href="https://confluence.atlassian.com/enterprise/atlassian-enterprise-releases-948227420.html">Long Term Support</a> release 8.5.6
-      latest: Latest release 8.11.0
-    default: latest
-    
+  main:
+    fields:
+      - name: jira_version
+        caption: Jira Version
+        type: list
+        required: true
+        values: []
+        hidden: false
+      - type: displayfield
+
+  config:
+    fields:
+      - name: scheme
+        caption: scheme
+        type: string
+        default: https
+        width: 400
+      - name: proxy_name
+        caption: proxyName
+        type: string
+        vtype: extdomain
+        width: 400
+      - name: proxy_port
+        caption: proxyPort
+        type: string
+        default: 443
+        width: 400
+
+ 
 globals:
   DB_NAME: jiradb
   DB_USER: jadmin
   DB_PASSWD: ${fn.password}
-  versionJIRA: ${settings.jiraversion}
+#server.xml is created from server.xml.j2 each time container restarted
+  serverConfig: /opt/atlassian/etc/server.xml.j2
   
 ssl: true
 
 nodes:
-- count: 1
-  cloudlets: 24
-  nodeType: javaengine
+- cloudlets: 22
   nodeGroup: cp
-  extip: false
-  startService: false
-  startServiceOnCreation: false
-- count: 1
-  cloudlets: 4
-  nodeGroup: bl
-  nodeType: nginx
-  extip: true
+  image: atlassian/jira-software:${settings.jira_version}
+
+- cloudlets: 12
+  nodeGroup: sqldb
+  nodeType: postgresql
+  count: 1
 
 onInstall:
-  - if ('${settings.db}' == 'true'): 
-      - addDBnode
-      - setGlobals:
-          success: success-w-db.md
-    elif ('${settings.db}' == 'false'): 
-      - setGlobals:
-          success: success-no-db.md
-  - downloadJira
-  - fontconfigInstall
-  - setupJira
   - createDB
-  - proxyConfigure
+  - installAddon:
+      id: jira-config-update
+      nodeGroup: cp    
     
 actions:
-  addDBnode:
-    - addNodes:
-        cloudlets: 12
-        nodeGroup: sqldb
-        nodeType: postgresql
-        count: 1
  
-
-  downloadJira:
-    - if ('${globals.versionJIRA}' == 'long-term-support'):
-        cmd [cp]: |-
-          wget -qO /home/jelastic/jira.bin https://product-downloads.atlassian.com/software/jira/downloads/atlassian-jira-software-8.5.6-x64.bin
-    - if ('${globals.versionJIRA}' == 'latest'):
-        cmd [cp]: |-
-          wget -qO /home/jelastic/jira.bin https://product-downloads.atlassian.com/software/jira/downloads/atlassian-jira-software-8.11.0-x64.bin
-      
-  fontconfigInstall:
-    cmd [cp]: |-
-      chmod a+x /home/jelastic/jira.bin
-      yum install -y fontconfig
-      yum install -y dejavu-sans-fonts
-    user: root
-     
-  setupJira:
-    cmd [cp]: |-
-      exp_internal 1
-      expect -c '
-      spawn /home/jelastic/jira.bin
-      expect "OK \[o, Enter\], Cancel \[c\]"
-      send "o\r"
-      expect "Express Install (use default settings) \[1\], Custom Install (recommended for advanced users) \[2, Enter\], Upgrade an existing Jira installation \[3\]" 
-      send "1\r"
-      expect "Install \[i, Enter\], Exit \[e\]"
-      send "i\r"
-      sleep 20
-      expect "Yes \[y, Enter\], No \[n\]"
-      send "y\r"
-      sleep 10
-      expect eof
-      '
-    user: root
-  
-  proxyConfigure:
-    cmd[cp]:
-      chmod a+w /opt/atlassian/jira/conf/server.xml
-#  Изменить server.xml(из манифеста добавить поля secure="true" scheme="https" proxyPort="443"/> и вручную кастомный домен proxyName="jirateam.jele.website"
-# RESTART Jira нужно делать от юзера jira $/etc/init.d/jira restart
   createDB:
      - cmd[${nodes.sqldb.master.id}]: 
          psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.DB_NAME} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
          psql -Uwebadmin postgres -c "CREATE USER ${globals.DB_USER} WITH ENCRYPTED PASSWORD '${globals.DB_PASSWD}';"
          psql -Uwebadmin postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${globals.DB_NAME} TO ${globals.DB_USER};"
 
-startPage: https://${env.domain}
+addons:
+  - id: jira-config-update
+    name: Connector Configuration
+    description: You can change connector parameters. 
+    buttons:    
+      - confirmText: Are you sure you want to proceed?
+        loadingText: Changing parameters
+        action: changeParams
+        caption: Change proxy parameters
+        successText: The parameters have been updated successfully!
+        settings: config
+        title: Enter reverse proxy parameters
+        
+    actions:
+      changeParams:
+        - cmd[cp]: |-
+            sed -i "s|^\s*scheme\=[^*]*|               scheme\=\"${settings.scheme}\"|g" ${globals.serverConfig};
+            sed -i "s|^\s*proxyName\=[^*]*|               proxyName\=\"${settings.proxy_name}\"|g" ${globals.serverConfig};
+            sed -i "s|^\s*proxyPort\=[^*]*|               proxyPort\=\"settings.proxy_port\"|g" ${globals.serverConfig};
+          user: root
+        - restartContainers:
+            nodeGroup: cp
+ 
+
+startPage: https://node${nodes.cp.master.id}-${env.domain}
   
-success: /texts/${globals.success}
+success: /texts/success-w-db.md
