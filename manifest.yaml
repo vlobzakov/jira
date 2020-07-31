@@ -24,7 +24,7 @@ onBeforeInit: |
         if (arr[i].edition == edition && arr[i].platform == "Unix") {
           if (edition == "Standard") { caption = "Latest" } else { caption = "Long Term Support" }
       <!--Here we use json files to get jira tags for docker images -->
-          values.push({ caption: caption, value: arr[i].version });   
+          values.push({ caption: caption+' '+arr[i].version, value: arr[i].version });   
       <!-- Use the arr[i].zipUrl to get URL to the application  -->    
           break;
         }
@@ -81,14 +81,19 @@ globals:
 ssl: true
 
 nodes:
-- cloudlets: 22
-  nodeGroup: cp
-  image: atlassian/jira-software:${settings.jira_version}
-
 - cloudlets: 12
   nodeGroup: sqldb
   nodeType: postgresql
   count: 1
+
+- cloudlets: 22
+  nodeGroup: cp
+  image: atlassian/jira-software:${settings.jira_version}
+#  env:
+#    ATL_JDBC_USER: ${globals.DB_USER}
+#    TL_JDBC_PASSWORD: ${globals.DB_PASSWD}
+#    ATL_DB_DRIVER: org.postgresql.Driver
+
 
 onInstall:
   - createDB
@@ -103,6 +108,8 @@ actions:
          psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.DB_NAME} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
          psql -Uwebadmin postgres -c "CREATE USER ${globals.DB_USER} WITH ENCRYPTED PASSWORD '${globals.DB_PASSWD}';"
          psql -Uwebadmin postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${globals.DB_NAME} TO ${globals.DB_USER};"
+#     - cmd[cp]:
+#         export ATL_JDBC_URL=node${nodes.sqldb.master.id}-${env.domain}
 
 addons:
   - id: jira-config-update
