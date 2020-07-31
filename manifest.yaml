@@ -128,6 +128,6 @@ addons:
             nodeGroup: cp
  
 
-startPage: https://node${nodes.cp.master.id}-${env.domain}
+startPage: https://${env.domain}
   
 success: /texts/success-w-db.md
