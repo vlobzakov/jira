@@ -6,10 +6,10 @@
   <database-type>postgres72</database-type>
   <schema-name>public</schema-name>
   <jdbc-datasource>
-    <url>jdbc:postgresql://node259208-jira-software.vip.jelastic.cloud:5432/jiradb</url>
+    <url>jdbc:postgresql://</url>
     <driver-class>org.postgresql.Driver</driver-class>
-    <username>jadmin</username>
-    <password>1Laj80E9K5</password>
+    <username></username>
+    <password></password>
     <pool-min-size>20</pool-min-size>
     <pool-max-size>20</pool-max-size>
     <pool-max-wait>30000</pool-max-wait>
