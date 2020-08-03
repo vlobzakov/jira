@@ -2,9 +2,9 @@
 
 Database access credentials:    
   **Hostname**: node${nodes.sqldb.master.id}-${env.domain}  
-  **Username**: ${globals.DB_USER}  
-  **Password**: ${globals.DB_PASSWD}  
-  **Database name**: ${globals.DB_NAME}  
+  **Username**: ${globals.dbUser}  
+  **Password**: ${globals.dbPasswd}  
+  **Database name**: ${globals.dbName}  
 
 The instructions below can help you with further managing your Jira tracking system:
 
