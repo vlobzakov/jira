@@ -82,6 +82,12 @@ globals:
 ssl: true
 
 nodes:
+- count: 1
+  cloudlets: 4
+  nodeGroup: bl
+  nodeType: nginx
+  extip: true
+
 - cloudlets: 12
   nodeGroup: sqldb
   nodeType: postgresql
@@ -90,10 +96,10 @@ nodes:
 - cloudlets: 22
   nodeGroup: cp
   image: atlassian/jira-software:${settings.jira_version}
-  env:
-    ATL_JDBC_USER: ${globals.DB_USER}
-    TL_JDBC_PASSWORD: ${globals.DB_PASSWD}
-    ATL_DB_DRIVER: org.postgresql.Driver
+#  env:
+#    ATL_JDBC_USER: ${globals.DB_USER}
+#    TL_JDBC_PASSWORD: ${globals.DB_PASSWD}
+#    ATL_DB_DRIVER: org.postgresql.Driver
 
 
 onInstall:
