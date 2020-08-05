@@ -96,15 +96,17 @@ nodes:
 - cloudlets: 22
   nodeGroup: cp
   image: atlassian/jira-software:${settings.jira_version}
-#  env:
-#    ATL_JDBC_USER: ${globals.DB_USER}
-#    TL_JDBC_PASSWORD: ${globals.DB_PASSWD}
-#    ATL_DB_DRIVER: org.postgresql.Driver
-
+  env:
+    ATL_JDBC_USER: ${globals.DB_USER}
+    ATL_JDBC_PASSWORD: ${globals.DB_PASSWD}
+    ATL_DB_DRIVER: org.postgresql.Driver
+    ATL_DB_TYPE: postgres72    
+    ATL_DB_SCHEMA_NAME: public
+    
 
 onInstall:
   - createDB
-  - dbAccessConfig
+#  - dbAccessConfig
   - installAddon:
       id: jira-config-update
       nodeGroup: cp    
@@ -116,8 +118,8 @@ actions:
          psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.dbName} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
          psql -Uwebadmin postgres -c "CREATE USER ${globals.dbUser} WITH ENCRYPTED PASSWORD '${globals.dbPasswd}';"
          psql -Uwebadmin postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${globals.dbName} TO ${globals.dbUser};"
-#     - cmd[cp]:
-#         ATL_JDBC_URL=node${nodes.sqldb.master.id}-${env.domain}
+     - cmd[cp]:
+         export ATL_JDBC_URL=node${nodes.sqldb.master.id}-${env.domain}
   
   dbAccessConfig:
      - cmd[cp]:
