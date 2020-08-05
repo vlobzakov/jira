@@ -87,10 +87,10 @@ nodes:
   nodeGroup: bl
   nodeType: nginx
   extip: true
-
+  
 - cloudlets: 12
   nodeGroup: sqldb
-  nodeType: postgresql
+  nodeType: postgres11
   count: 1
 
 - cloudlets: 22
@@ -102,14 +102,14 @@ nodes:
     ATL_DB_DRIVER: org.postgresql.Driver
     ATL_DB_TYPE: postgres72    
     ATL_DB_SCHEMA_NAME: public
-    
+
 
 onInstall:
   - createDB
 #  - dbAccessConfig
   - installAddon:
-      id: jira-config-update
-      nodeGroup: cp    
+      - id: jira-config-update
+        nodeGroup: cp
     
 actions:
  
@@ -163,7 +163,6 @@ addons:
           user: root
         - restartContainers:
             nodeGroup: cp
- 
 
 startPage: https://${env.domain}
   
