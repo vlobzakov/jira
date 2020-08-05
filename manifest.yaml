@@ -122,12 +122,11 @@ addons:
         - cmd[cp]: |-
             sed -i "s|^\s*scheme\=[^*]*|               scheme\=\"${settings.scheme}\"|g" ${globals.serverConfig};
             sed -i "s|^\s*proxyName\=[^*]*|               proxyName\=\"${settings.proxy_name}\"|g" ${globals.serverConfig};
-            sed -i "s|^\s*proxyPort\=[^*]*|               proxyPort\=\"settings.proxy_port\"|g" ${globals.serverConfig};
+            sed -i "s|^\s*proxyPort\=[^*]*|               proxyPort\=\"${settings.proxy_port}\"|g" ${globals.serverConfig};
           user: root
         - restartContainers:
             nodeGroup: cp
- 
 
-startPage: https://node${nodes.cp.master.id}-${env.domain}
+startPage: https://${env.domain}
   
 success: /texts/success-w-db.md
