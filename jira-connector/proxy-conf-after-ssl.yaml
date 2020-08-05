@@ -1,0 +1,15 @@
+type: update
+name: Jira Connnector Config After SSL
+description: change connector parameters. 
+onAfterBindSSL: 
+  log: after bind SSL
+  if ( nodes.bl.length = 1):
+     cmd[cp]: |-
+       sed -i "s|^\s*scheme\=[^*]*|               scheme\=\"https\"|g" ${globals.serverConfig};
+       sed -i "s|^\s*proxyName\=[^*]*|               proxyName\=\"${env.domain}\"|g" ${globals.serverConfig};
+       sed -i "s|^\s*proxyPort\=[^*]*|               proxyPort\=\"443\"|g" ${globals.serverConfig};
+     user: root
+     restartContainers:
+         nodeGroup: cp
+
+  
