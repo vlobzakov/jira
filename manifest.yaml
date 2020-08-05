@@ -108,7 +108,6 @@ nodes:
 
 onInstall:
   - createDB
-#  - dbAccessConfig
   - installAddon:
       - id: jira-config-update
         nodeGroup: cp
@@ -122,29 +121,7 @@ actions:
          psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.dbName} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
          psql -Uwebadmin postgres -c "CREATE USER ${globals.dbUser} WITH ENCRYPTED PASSWORD '${globals.dbPasswd}';"
          psql -Uwebadmin postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${globals.dbName} TO ${globals.dbUser};"
-     - cmd[cp]:
-         export ATL_JDBC_URL=node${nodes.sqldb.master.id}-${env.domain}
-  
-  dbAccessConfig:
-     - cmd[cp]:
-        wget -qO /var/atlassian/application-data/jira/dbconfig.xml https://raw.githubusercontent.com/vlobzakov/jira/master/jdbc-connector/dbconfig.xml
-          
-     - replaceInFile:
-         nodeId: ${nodes.cp.master.id}
-         nodeMission: cp
-         nodeType: docker
-         path: /var/atlassian/application-data/jira/dbconfig.xml
-         replacements:
-           - pattern: <url>jdbc:postgresql://</url>
-             replacement: <url>jdbc:postgresql://node${nodes.sqldb.master.id}-${env.domain}:${globals.dbPort}/${globals.dbName}</url>
-           - pattern: <username></username>
-             replacement: <username>${globals.dbUser}</username>
-           - pattern: <password></password>
-             replacement: <password>${globals.dbPasswd}</password>
-     - restartContainers:
-         nodeGroup: cp
-
-
+      
 addons:
   - id: jira-config-update
     name: Connector Configuration
