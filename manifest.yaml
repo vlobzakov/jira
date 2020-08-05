@@ -106,7 +106,6 @@ nodes:
 
 onInstall:
   - createDB
-#  - dbAccessConfig
   - installAddon:
       - id: jira-config-update
         nodeGroup: cp
