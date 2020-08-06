@@ -40,7 +40,6 @@ onBeforeInit: |
     return {result: 1099, error:"can't determine latest or lts version", versions: values };
   }
 
-
 settings:
   main:
     fields:
@@ -51,6 +50,10 @@ settings:
         values: []
         hidden: false
       - type: displayfield
+      - type: checkbox
+        name: le-addon
+        caption: Install Let's Encrypt Certificates and Custom Domains Addon. Public IP is required.
+        value: true
 
   config:
     fields:
@@ -78,16 +81,13 @@ globals:
 #server.xml is created from server.xml.j2 each time container restarted
   serverConfig: /opt/atlassian/etc/server.xml.j2
   dbPort: 5432
+  protocol: http
+  proxyPort: 8080
   
 ssl: true
 
 nodes:
-- count: 1
-  cloudlets: 4
-  nodeGroup: bl
-  nodeType: nginx
-  extip: true
-  
+ 
 - cloudlets: 12
   nodeGroup: sqldb
   nodeType: postgres11
@@ -104,24 +104,61 @@ nodes:
     ATL_DB_SCHEMA_NAME: public
     ATL_JDBC_URL: jdbc:postgresql://sqldb/${globals.dbName}
 
-
-
 onInstall:
+  - if ('${settings.le-addon}' == 'true'): 
+      - addBLnode
+      
   - createDB
+
   - installAddon:
       - id: jira-config-update
         nodeGroup: cp
+  
+  - script: https://raw.githubusercontent.com/jelastic-jps/wordpress/master/wordpress/scripts/idna.js
+  - setGlobals:
+      DOMAIN: ${response.domain} 
+  - if (${settings.le-addon:false}): 
+      - install-LE-addon
+      - setGlobals:
+          protocol: https
+          proxyPort: 443
+
+  - cmd[cp]: |-
+      sed -i "s|^\s*scheme\=[^*]*|               scheme\=\"${globals.protocol}\"|g" ${globals.serverConfig};
+      sed -i "s|^\s*proxyName\=[^*]*|               proxyName\=\"${globals.DOMAIN}\"|g" ${globals.serverConfig};
+      sed -i "s|^\s*proxyPort\=[^*]*|               proxyPort\=\"${globals.proxyPort}\"|g" ${globals.serverConfig};
+    user: root
+
+          
   - restartContainers:
         nodeGroup: cp  
         
 actions:
+  addBLnode:
+    - addNodes:
+        count: 1
+        cloudlets: 4
+        nodeGroup: bl
+        nodeType: nginx
+        extip: true
+
  
   createDB:
      - cmd[${nodes.sqldb.master.id}]: 
          psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.dbName} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
          psql -Uwebadmin postgres -c "CREATE USER ${globals.dbUser} WITH ENCRYPTED PASSWORD '${globals.dbPasswd}';"
          psql -Uwebadmin postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${globals.dbName} TO ${globals.dbUser};"
-      
+     - cmd[cp]:
+         export ATL_JDBC_URL=node${nodes.sqldb.master.id}-${env.domain}
+  
+  install-LE-addon:
+    - install: https://github.com/jelastic-jps/lets-encrypt/blob/master/manifest.jps?_r=${fn.random}
+      nodeGroup: bl
+      skipEmail: true
+      settings:
+        customDomains: ${globals.DOMAIN}
+        fallbackToX1: true
+
 addons:
   - id: jira-config-update
     name: Connector Configuration
@@ -145,6 +182,6 @@ addons:
         - restartContainers:
             nodeGroup: cp
 
-startPage: https://${env.domain}
+startPage: ${globals.protocol}://${env.domain}
   
 success: /texts/success-w-db.md
