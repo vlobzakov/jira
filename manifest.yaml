@@ -87,41 +87,46 @@ globals:
 ssl: true
 
 nodes:
- 
-- cloudlets: 12
-  nodeGroup: sqldb
-  nodeType: postgres11
-  count: 1
 
-- cloudlets: 22
-  nodeGroup: cp
-  image: atlassian/jira-software:${settings.jira_version}
-  env:
-    ATL_JDBC_USER: ${globals.dbUser}
-    ATL_JDBC_PASSWORD: ${globals.dbPasswd}
-    ATL_DB_DRIVER: org.postgresql.Driver
-    ATL_DB_TYPE: postgres72    
-    ATL_DB_SCHEMA_NAME: public
-    ATL_JDBC_URL: jdbc:postgresql://sqldb/${globals.dbName}
+  - cloudlets: 4
+    count: 1
+    nodeGroup: bl
+    nodeType: nginx
+    extip: true
+ 
+  - cloudlets: 12
+    nodeGroup: sqldb
+    nodeType: postgres11
+    count: 1
+
+  - cloudlets: 22
+    nodeGroup: cp
+    image: atlassian/jira-software:${settings.jira_version}
+    env:
+      ATL_JDBC_USER: ${globals.dbUser}
+      ATL_JDBC_PASSWORD: ${globals.dbPasswd}
+      ATL_DB_DRIVER: org.postgresql.Driver
+      ATL_DB_TYPE: postgres72    
+      ATL_DB_SCHEMA_NAME: public
+      ATL_JDBC_URL: jdbc:postgresql://sqldb/${globals.dbName}
 
 onInstall:
   - if ('${settings.le-addon}' == 'true'): 
-      - addBLnode
-      
+      - script: https://raw.githubusercontent.com/jelastic-jps/wordpress/master/wordpress/scripts/idna.js
+      - setGlobals:
+          DOMAIN: ${response.domain} 
+      - install-LE-addon
+      - setGlobals:
+          protocol: https
+          proxyPort: 443      
+
   - createDB
 
   - installAddon:
       - id: jira-config-update
         nodeGroup: cp
   
-  - script: https://raw.githubusercontent.com/jelastic-jps/wordpress/master/wordpress/scripts/idna.js
-  - setGlobals:
-      DOMAIN: ${response.domain} 
-  - if (${settings.le-addon:false}): 
-      - install-LE-addon
-      - setGlobals:
-          protocol: https
-          proxyPort: 443
+
 
   - cmd[cp]: |-
       sed -i "s|^\s*scheme\=[^*]*|               scheme\=\"${globals.protocol}\"|g" ${globals.serverConfig};
@@ -134,27 +139,17 @@ onInstall:
         nodeGroup: cp  
         
 actions:
-  addBLnode:
-    - addNodes:
-        count: 1
-        cloudlets: 4
-        nodeGroup: bl
-        nodeType: nginx
-        extip: true
-
  
   createDB:
      - cmd[${nodes.sqldb.master.id}]: 
          psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.dbName} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
          psql -Uwebadmin postgres -c "CREATE USER ${globals.dbUser} WITH ENCRYPTED PASSWORD '${globals.dbPasswd}';"
          psql -Uwebadmin postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${globals.dbName} TO ${globals.dbUser};"
-     - cmd[cp]:
-         export ATL_JDBC_URL=node${nodes.sqldb.master.id}-${env.domain}
   
   install-LE-addon:
     - install: https://github.com/jelastic-jps/lets-encrypt/blob/master/manifest.jps?_r=${fn.random}
       nodeGroup: bl
-      skipEmail: true
+      skipEmail: false
       settings:
         customDomains: ${globals.DOMAIN}
         fallbackToX1: true
