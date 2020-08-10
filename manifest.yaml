@@ -19,12 +19,10 @@ onBeforeInit: |
   function getVersions(edition, url) {
       var body = toNative(new com.hivext.api.core.utils.Transport().get(url));
       var arr = eval(body.substring(10, body.length - 1)); 
-      
       for (var i in arr) {
         if (arr[i].edition == edition && arr[i].platform == "Unix") {
           if (edition == "Standard") { caption = "Latest" } else { caption = "Long Term Support" }
-      <!--Here we use json files to get jira tags for docker images -->
-           values.push({ caption: arr[i].version+' '+'('+caption+')',value: arr[i].version });
+              values.push({ caption: arr[i].version+' '+'('+caption+')',value: arr[i].version }); 
       <!-- Use the arr[i].zipUrl to get URL to the application  -->    
           break;
         }
@@ -39,6 +37,8 @@ onBeforeInit: |
   } else {
     return {result: 1099, error:"can't determine latest or lts version", versions: values };
   }
+  
+onAfterBindSSL: setupProxy
 
 settings:
   main:
@@ -49,7 +49,6 @@ settings:
         required: true
         values: []
         hidden: false
-        default: 
       - type: displayfield
 
   config:
@@ -77,9 +76,8 @@ globals:
   dbPasswd: ${fn.password}
 #server.xml is created from server.xml.j2 each time container restarted
   serverConfig: /opt/atlassian/etc/server.xml.j2
-  dbPort: 5432
-  protocol: http
-  proxyPort: 8080
+  protocol: https
+  proxyPort: 443
   
 ssl: true
 
@@ -109,19 +107,12 @@ nodes:
 
 onInstall:
 
-  - script: https://raw.githubusercontent.com/jelastic-jps/wordpress/master/wordpress/scripts/idna.js
+  - script: /scripts/idna.js
   - setGlobals:
       DOMAIN: ${response.domain} 
   - install-LE-addon
-  - setGlobals:
-      protocol: https
-      proxyPort: 443      
 
   - createDB
-
-  - installAddon:
-      - id: jira-config-update
-        nodeGroup: cp
 
   - cmd[cp]: |-
       sed -i "s|^\s*scheme\=[^*]*|               scheme\=\"${globals.protocol}\"|g" ${globals.serverConfig};
@@ -148,28 +139,18 @@ actions:
         customDomains: ${globals.DOMAIN}
         fallbackToX1: true
 
-addons:
-  - id: jira-config-update
-    name: Connector Configuration
-    description: You can change connector parameters. 
-    buttons:    
-      - confirmText: Are you sure you want to proceed?
-        loadingText: Changing parameters
-        action: changeParams
-        caption: Change proxy parameters
-        successText: The parameters have been updated successfully!
-        settings: config
-        title: Enter reverse proxy parameters
-        
-    actions:
-      changeParams:
-        - cmd[cp]: |-
-            sed -i "s|^\s*scheme\=[^*]*|               scheme\=\"${settings.scheme}\"|g" ${globals.serverConfig};
-            sed -i "s|^\s*proxyName\=[^*]*|               proxyName\=\"${settings.proxy_name}\"|g" ${globals.serverConfig};
-            sed -i "s|^\s*proxyPort\=[^*]*|               proxyPort\=\"${settings.proxy_port}\"|g" ${globals.serverConfig};
-          user: root
-        - restartContainers:
-            nodeGroup: cp
+  setupProxy:
+    - cmd[bl]: source /opt/letsencrypt/settings && echo $domain
+    - set:
+        domain: ${response.out}
+    - cmd[cp]: |-
+            sed -i "s|^\s*scheme\=[^*]*|               scheme\=\"${globals.protocol}\"|g" ${globals.serverConfig};
+            sed -i "s|^\s*proxyName\=[^*]*|               proxyName\=\"${this.domain}\"|g" ${globals.serverConfig};
+            sed -i "s|^\s*proxyPort\=[^*]*|               proxyPort\=\"${globals.proxyPort}\"|g" ${globals.serverConfig};
+      user: root
+    - restartContainers:
+        nodeGroup: cp  
+ 
 
 startPage: ${globals.protocol}://${env.domain}
   
