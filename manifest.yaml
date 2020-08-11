@@ -9,7 +9,7 @@ categories:
 - apps/dev-and-admin-tools
 
 description:
-  text: JIRA is a project management software. Your team members can use JIRA to plan, track, and release effective software. You can create problem histories, plan sprints, and assign tasks to your teammates.
+  text: JIRA is a project management and bug tracking system for software development. Your team members can use JIRA to plan, track, and release effective software. You can create problem histories, plan sprints, and assign tasks to your teammates.
   short: Jira ticketing system
 
  
@@ -56,25 +56,6 @@ settings:
         hidden: false
       - type: displayfield
 
-  config:
-    fields:
-      - name: scheme
-        caption: scheme
-        type: string
-        default: https
-        width: 400
-      - name: proxy_name
-        caption: proxyName
-        type: string
-        vtype: extdomain
-        width: 400
-      - name: proxy_port
-        caption: proxyPort
-        type: string
-        default: 443
-        width: 400
-
- 
 globals:
   dbName: jiradb
   dbUser: jadmin
@@ -84,8 +65,6 @@ globals:
   protocol: https
   proxyPort: 443
   
-ssl: true
-
 nodes:
 
   - cloudlets: 4
@@ -118,10 +97,6 @@ onInstall:
   - install-LE-addon
 
   - createDB
-
-  - installAddon:
-      - id: jira-config-update
-        nodeGroup: cp
 
   - cmd[cp]: |-
       sed -i "s|^\s*scheme\=[^*]*|               scheme\=\"${globals.protocol}\"|g" ${globals.serverConfig};
@@ -160,30 +135,6 @@ actions:
     - restartContainers:
         nodeGroup: cp  
  
-
-addons:
-  - id: jira-config-update
-    name: Connector Configuration
-    description: You can change connector parameters. 
-    buttons:    
-      - confirmText: Are you sure you want to proceed?
-        loadingText: Changing parameters
-        action: changeParams
-        caption: Change proxy parameters
-        successText: The parameters have been updated successfully!
-        settings: config
-        title: Enter reverse proxy parameters
-        
-    actions:
-      changeParams:
-        - cmd[cp]: |-
-            sed -i "s|^\s*scheme\=[^*]*|               scheme\=\"${settings.scheme}\"|g" ${globals.serverConfig};
-            sed -i "s|^\s*proxyName\=[^*]*|               proxyName\=\"${settings.proxy_name}\"|g" ${globals.serverConfig};
-            sed -i "s|^\s*proxyPort\=[^*]*|               proxyPort\=\"${settings.proxy_port}\"|g" ${globals.serverConfig};
-          user: root
-        - restartContainers:
-            nodeGroup: cp
-
 startPage: ${globals.protocol}://${env.domain}
   
 success: /texts/success-w-db.md
