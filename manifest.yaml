@@ -9,12 +9,20 @@ categories:
 - apps/dev-and-admin-tools
 
 description:
-  text: JIRA is a project management and bug tracking system for software development. Your team members can use JIRA to plan, track, and release effective software. You can create problem histories, plan sprints, and assign tasks to your teammates.
+  text: JIRA is a project management software. Your team members can use JIRA to plan, track, and release effective software. You can create problem histories, plan sprints, and assign tasks to your teammates.
   short: Jira ticketing system
 
+settings:
+    fields:
+      - name: jira_version
+        caption: Jira Version
+        type: list
+        required: true
+        values: []
+      - type: displayfield
  
 onBeforeInit: |  
-  var values = jps.settings.main.fields[0].values;
+  var values = jps.settings.fields[0].values;
   
   function getVersions(edition, url) {
       var body = toNative(new com.hivext.api.core.utils.Transport().get(url));
@@ -25,7 +33,7 @@ onBeforeInit: |
           caption = "Latest";
           } else { 
           caption = "Long Term Support";
-          jps.settings.main.fields[0]["default"] = arr[i].version;
+          jps.settings.fields[0]["default"] = arr[i].version;
           }
               values.push({ caption: arr[i].version+' '+'('+caption+')',value: arr[i].version }); 
       <!-- Use the arr[i].zipUrl to get URL to the application  -->    
@@ -45,17 +53,6 @@ onBeforeInit: |
   
 onAfterBindSSL: setupProxy
 
-settings:
-  main:
-    fields:
-      - name: jira_version
-        caption: Jira Version
-        type: list
-        required: true
-        values: []
-        hidden: false
-      - type: displayfield
-
 globals:
   dbName: jiradb
   dbUser: jadmin
@@ -65,6 +62,8 @@ globals:
   protocol: https
   proxyPort: 443
   
+ssl: true
+
 nodes:
 
   - cloudlets: 4
@@ -88,6 +87,9 @@ nodes:
       ATL_DB_TYPE: postgres72    
       ATL_DB_SCHEMA_NAME: public
       ATL_JDBC_URL: jdbc:postgresql://sqldb/${globals.dbName}
+      ATL_PROXY_PORT: ${globals.proxyPort}
+      ATL_TOMCAT_SCHEME: https
+      ATL_TOMCAT_SECURE: true
 
 onInstall:
 
@@ -99,9 +101,7 @@ onInstall:
   - createDB
 
   - cmd[cp]: |-
-      sed -i "s|^\s*scheme\=[^*]*|               scheme\=\"${globals.protocol}\"|g" ${globals.serverConfig};
       sed -i "s|^\s*proxyName\=[^*]*|               proxyName\=\"${env.domain}\"|g" ${globals.serverConfig};
-      sed -i "s|^\s*proxyPort\=[^*]*|               proxyPort\=\"${globals.proxyPort}\"|g" ${globals.serverConfig};
     user: root
           
   - restartContainers:
@@ -112,8 +112,8 @@ actions:
   createDB:
      - cmd[${nodes.sqldb.master.id}]: 
          psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.dbName} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
-         psql -Uwebadmin postgres -c "CREATE USER ${globals.dbUser} WITH ENCRYPTED PASSWORD '${globals.dbPasswd}';"
-         psql -Uwebadmin postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${globals.dbName} TO ${globals.dbUser};"
+         psql -Uwebadmin postgres -c "CREATE USER ${globals.dbUser} WITH ENCRYPTED PASSWORD '${globals.dbPasswd}' SUPERUSER;"
+#         psql -Uwebadmin postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${globals.dbName} TO ${globals.dbUser};"
   
   install-LE-addon:
     - install: https://github.com/jelastic-jps/lets-encrypt/blob/master/manifest.jps?_r=${fn.random}
@@ -128,9 +128,7 @@ actions:
     - set:
         domain: ${response.out}
     - cmd[cp]: |-
-            sed -i "s|^\s*scheme\=[^*]*|               scheme\=\"${globals.protocol}\"|g" ${globals.serverConfig};
             sed -i "s|^\s*proxyName\=[^*]*|               proxyName\=\"${this.domain}\"|g" ${globals.serverConfig};
-            sed -i "s|^\s*proxyPort\=[^*]*|               proxyPort\=\"${globals.proxyPort}\"|g" ${globals.serverConfig};
       user: root
     - restartContainers:
         nodeGroup: cp  
