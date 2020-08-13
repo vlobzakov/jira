@@ -51,7 +51,12 @@ onBeforeInit: |
     return {result: 1099, error:"can't determine latest or lts version", versions: values };
   }
   
+     
 onAfterBindSSL: setupProxy
+
+onAfterStart:
+  restartContainers:
+      nodeGroup: cp
 
 globals:
   dbName: jiradb
@@ -90,9 +95,13 @@ nodes:
       ATL_PROXY_PORT: ${globals.proxyPort}
       ATL_TOMCAT_SCHEME: https
       ATL_TOMCAT_SECURE: true
+      JVM_MAXIMUM_MEMORY: 3048m
+#      ATL_PROXY_NAME: ${globals.proxyName}
+      
+      
 
 onInstall:
-
+  - log: ProxyNAME is ${globals.proxyName}
   - script: /scripts/idna.js
   - setGlobals:
       DOMAIN: ${response.domain} 
