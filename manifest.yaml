@@ -134,7 +134,8 @@ actions:
         domain: ${response.out}
 
     - env.control.AddContainerEnvVars [cp]:
-         vars: { ATL_PROXY_NAME: '${this.domain}' }
+         vars: 
+           ATL_PROXY_NAME: ${this.domain}
     - env.control.ExecDockerRunCmd [${nodes.cp.join(id,)}]
 
     - restartContainers:
