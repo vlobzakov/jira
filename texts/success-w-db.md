@@ -1,4 +1,4 @@
-**Jira Software application**: [https://${env.domain}](https://${env.domain})  
+**Jira Software application**: [${globals.protocol}://${env.domain}](${globals.protocol}://${env.domain})  
 
 Database access credentials:    
   **Hostname**: node${nodes.sqldb.master.id}-${env.domain}  
