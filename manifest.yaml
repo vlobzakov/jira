@@ -50,9 +50,8 @@ onBeforeInit: |
   } else {
     return {result: 1099, error:"can't determine latest or lts version", versions: values };
   }
-  
-     
-onAfterBindSSL: setupProxy
+    
+onAfterBindSSL: newProxySetup
 
 onAfterStart:
   restartContainers:
@@ -62,7 +61,6 @@ globals:
   dbName: jiradb
   dbUser: jadmin
   dbPasswd: ${fn.password}
-#server.xml is created from server.xml.j2 each time container restarted
   serverConfig: /opt/atlassian/etc/server.xml.j2
   protocol: https
   proxyPort: 443
@@ -95,24 +93,25 @@ nodes:
       ATL_PROXY_PORT: ${globals.proxyPort}
       ATL_TOMCAT_SCHEME: https
       ATL_TOMCAT_SECURE: true
-      JVM_MAXIMUM_MEMORY: 3048m
-#      ATL_PROXY_NAME: ${globals.proxyName}
-      
-      
 
 onInstall:
-  - log: ProxyNAME is ${globals.proxyName}
+  - env.control.AddContainerEnvVars [cp]:
+      vars: { ATL_PROXY_NAME: '${env.domain}' }
+  - env.control.ExecDockerRunCmd [${nodes.cp.join(id,)}]
+  
+  - cmd [cp]: free -m | sed -n '2p' | awk '{printf "%.f", $2 * 0.7}'
+  - env.control.AddContainerEnvVars [cp]:
+      vars: { JVM_MAXIMUM_MEMORY: '${response.out}m' }
+  - env.control.ExecDockerRunCmd [${nodes.cp.join(id,)}]
+
   - script: /scripts/idna.js
   - setGlobals:
       DOMAIN: ${response.domain} 
+
   - install-LE-addon
-
+ 
   - createDB
-
-  - cmd[cp]: |-
-      sed -i "s|^\s*proxyName\=[^*]*|               proxyName\=\"${env.domain}\"|g" ${globals.serverConfig};
-    user: root
-          
+ 
   - restartContainers:
         nodeGroup: cp  
         
@@ -122,7 +121,6 @@ actions:
      - cmd[${nodes.sqldb.master.id}]: 
          psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.dbName} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
          psql -Uwebadmin postgres -c "CREATE USER ${globals.dbUser} WITH ENCRYPTED PASSWORD '${globals.dbPasswd}' SUPERUSER;"
-#         psql -Uwebadmin postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${globals.dbName} TO ${globals.dbUser};"
   
   install-LE-addon:
     - install: https://github.com/jelastic-jps/lets-encrypt/blob/master/manifest.jps?_r=${fn.random}
@@ -132,13 +130,15 @@ actions:
         customDomains: ${globals.DOMAIN}
         fallbackToX1: true
 
-  setupProxy:
+  newProxySetup:
     - cmd[bl]: source /opt/letsencrypt/settings && echo $domain
     - set:
         domain: ${response.out}
-    - cmd[cp]: |-
-            sed -i "s|^\s*proxyName\=[^*]*|               proxyName\=\"${this.domain}\"|g" ${globals.serverConfig};
-      user: root
+
+    - env.control.AddContainerEnvVars [cp]:
+         vars: { ATL_PROXY_NAME: '${this.domain}' }
+    - env.control.ExecDockerRunCmd [${nodes.cp.join(id,)}]
+
     - restartContainers:
         nodeGroup: cp  
  
