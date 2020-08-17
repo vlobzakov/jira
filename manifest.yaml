@@ -95,13 +95,11 @@ nodes:
       ATL_TOMCAT_SECURE: true
 
 onInstall:
-  - env.control.AddContainerEnvVars [cp]:
-      vars: { ATL_PROXY_NAME: '${env.domain}' }
-  - env.control.ExecDockerRunCmd [${nodes.cp.join(id,)}]
-  
   - cmd [cp]: free -m | sed -n '2p' | awk '{printf "%.f", $2 * 0.7}'
   - env.control.AddContainerEnvVars [cp]:
-      vars: { JVM_MAXIMUM_MEMORY: '${response.out}m' }
+      vars:
+        ATL_PROXY_NAME: ${env.domain}
+        JVM_MAXIMUM_MEMORY: ${response.out}m
   - env.control.ExecDockerRunCmd [${nodes.cp.join(id,)}]
 
   - script: /scripts/idna.js
