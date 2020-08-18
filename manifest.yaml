@@ -136,11 +136,10 @@ actions:
     - env.control.AddContainerEnvVars [cp]:
          vars: 
            ATL_PROXY_NAME: ${this.domain}
-    - env.control.ExecDockerRunCmd [${nodes.cp.join(id,)}]
 
     - restartContainers:
         nodeGroup: cp  
  
-startPage: ${globals.protocol}://${env.domain}
+startPage: https://${env.domain}
   
 success: /texts/success-w-db.md
