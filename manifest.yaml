@@ -33,7 +33,6 @@ globals:
   dbName: jiradb
   dbUser: jadmin
   dbPasswd: ${fn.password}
-  serverConfig: /opt/atlassian/etc/server.xml.j2
   protocol: https
   proxyPort: 443
   
