@@ -2,7 +2,13 @@ type: update
 name: Jira Logic
 id: jira-software-logic
    
-onAfterBindSSL: newProxySetup
+onAfterBindSSL: 
+  - cmd[bl]: source /opt/letsencrypt/settings && echo $domain
+  - set:
+      domain: ${response.out}
+  - env.control.AddContainerEnvVars[cp]:
+       vars: 
+         ATL_PROXY_NAME: ${this.domain}
 
 onAfterStart:
   restartContainers:
@@ -28,14 +34,5 @@ onInstall:
   - setGlobals:
       DOMAIN: ${response.domain} 
 
-actions:
-  newProxySetup:
-    - cmd[bl]: source /opt/letsencrypt/settings && echo $domain
-    - set:
-        domain: ${response.out}
-
-    - env.control.AddContainerEnvVars[cp]:
-         vars: 
-           ATL_PROXY_NAME: ${this.domain}
 
     - restartContainers[cp]
