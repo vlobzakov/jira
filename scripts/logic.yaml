@@ -30,6 +30,3 @@ onInstall:
         JVM_MAXIMUM_MEMORY: ${response.out}m
   - env.control.ExecDockerRunCmd[${nodes.cp.join(id,)}]
 
-  - script: /scripts/idna.js
-  - setGlobals:
-      DOMAIN: ${response.domain} 
