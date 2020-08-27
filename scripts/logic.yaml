@@ -1,4 +1,6 @@
 type: update
+name: Jira Logic
+id: jira-software-logic
    
 onAfterBindSSL: newProxySetup
 
