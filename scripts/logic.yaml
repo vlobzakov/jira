@@ -14,6 +14,21 @@ onAfterStart:
   restartContainers:
       nodeGroup: cp
 
+onAfterClone:
+  - script: delete MANIFEST.id; delete MANIFEST.nodes; delete MANIFEST.onInstall; return {result:0, jps:MANIFEST};
+  - install: ${response.jps}
+    envName: ${event.response.env.envName}    
+    settings: 
+      jira_version: ${settings.jira_version}
+  - env.control.AddContainerEnvVars:  
+      envName: ${event.response.env.envName} 
+      nodeGroup: cp
+      vars:
+        ATL_PROXY_NAME: ${event.response.env.envName}
+  - env.control.RestartNodes:
+      envName: ${event.response.env.envName}
+      nodeGroup: cp
+
 onAfterSetCloudletCount[cp]:
    - cmd[cp]: free -m | sed -n '2p' | awk '{printf "%.f", $2 * 0.7}'
    - env.control.AddContainerEnvVars[cp]:
