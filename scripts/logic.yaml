@@ -33,6 +33,3 @@ onInstall:
   - script: /scripts/idna.js
   - setGlobals:
       DOMAIN: ${response.domain} 
-
-
-    - restartContainers[cp]
