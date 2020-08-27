@@ -21,12 +21,12 @@ onAfterClone:
     settings: 
       jira_version: ${settings.jira_version}
   - env.control.AddContainerEnvVars:  
-      envName: ${event.response.env.envName} 
+      domain: ${event.response.env.domain} 
       nodeGroup: cp
       vars:
-        ATL_PROXY_NAME: ${event.response.env.envName}
+        ATL_PROXY_NAME: ${event.response.env.domain}
   - env.control.RestartNodes:
-      envName: ${event.response.env.envName}
+      envName: ${event.response.env.domain}
       nodeGroup: cp
 
 onAfterSetCloudletCount[cp]:
