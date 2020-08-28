@@ -25,6 +25,12 @@ onAfterClone:
       nodeGroup: cp
       vars:
         ATL_PROXY_NAME: ${event.response.env.domain}
+  - install: https://github.com/jelastic-jps/lets-encrypt/blob/master/manifest.jps?_r=${fn.random}
+      nodeGroup: bl
+      skipEmail: false
+      settings:
+        customDomains: ${event.response.env.domain}
+        fallbackToX1: true
   - env.control.RestartNodes:
       envName: ${event.response.env.domain}
       nodeGroup: cp
