@@ -11,7 +11,8 @@ onAfterBindSSL:
          ATL_PROXY_NAME: ${this.domain}
 
 onAfterStart:
-  restartContainers[cp]
+  - restartContainers:
+      nodeGroup: cp
 
 onAfterClone:
   - script: delete MANIFEST.id; delete MANIFEST.nodes; delete MANIFEST.onInstall; return {result:0, jps:MANIFEST};
