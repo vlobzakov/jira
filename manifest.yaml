@@ -44,6 +44,7 @@ nodes:
     nodeGroup: sqldb
     nodeType: postgres10
     count: 1
+skipNodeEmails: true
 
   - cloudlets: 22
     nodeGroup: cp
