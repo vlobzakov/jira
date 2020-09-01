@@ -62,7 +62,7 @@ skipNodeEmails: true
 
 onInstall:
   - install: 
-      jps: https://raw.githubusercontent.com/vlobzakov/jira/after-clone/scripts/logic.yaml
+      jps: https://raw.githubusercontent.com/vlobzakov/jira/master/scripts/logic.yaml
       
   - script: /scripts/idna.js
   - setGlobals:
