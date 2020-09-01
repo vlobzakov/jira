@@ -44,7 +44,6 @@ nodes:
     nodeGroup: sqldb
     nodeType: postgres10
     count: 1
-skipNodeEmails: true
 
   - cloudlets: 22
     nodeGroup: cp
@@ -59,6 +58,7 @@ skipNodeEmails: true
       ATL_PROXY_PORT: ${globals.proxyPort}
       ATL_TOMCAT_SCHEME: https
       ATL_TOMCAT_SECURE: true
+skipNodeEmails: true
 
 onInstall:
   - install: 
