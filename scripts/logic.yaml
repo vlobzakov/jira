@@ -14,8 +14,12 @@ onAfterStart:
   restartContainers[cp]
 
 onAfterClone:
-  - env.control.AddContainerEnvVars:  
-      domain: ${event.response.env.domain} 
+  - script: delete MANIFEST.id; delete MANIFEST.nodes; delete MANIFEST.onInstall; return {result:0, jps:MANIFEST};
+  - install: ${response.jps}
+    envName: ${event.response.env.envName}    
+    settings: 
+      jira_version: ${settings.jira_version}
+  - env.control.AddContainerEnvVars: domain: ${event.response.env.domain} 
       nodeGroup: cp
       vars:
         ATL_PROXY_NAME: ${event.response.env.domain}
