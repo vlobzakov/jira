@@ -14,7 +14,6 @@ onAfterStart:
   restartContainers[cp]
 
 onAfterClone:
-  - script: delete MANIFEST.id; delete MANIFEST.nodes; delete MANIFEST.onInstall; return {result:0, jps:MANIFEST};
   - install: ${response.jps}
     envName: ${event.response.env.envName}    
     settings: 
