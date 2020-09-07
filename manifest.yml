@@ -1,12 +1,12 @@
 type: install
 appVersion: latest
 id: jira-software
-name: Jira Project & Issue Tracking System
+name: Jira Software 
 logo: /images/jira-logo-small.svg
 baseUrl: https://raw.githubusercontent.com/vlobzakov/jira/master
 
 categories:
-- apps/dev-and-admin-tools
+  - apps/dev-and-admin-tools
 
 description:
   text: JIRA is a project management software. Your team members can use JIRA to plan, track, and release effective software. You can create problem histories, plan sprints, and assign tasks to your teammates.
@@ -31,9 +31,9 @@ globals:
   proxyPort: 443
   
 ssl: true
+skipNodeEmails: true
 
 nodes:
-
   - cloudlets: 4
     count: 1
     nodeGroup: bl
@@ -58,24 +58,20 @@ nodes:
       ATL_PROXY_PORT: ${globals.proxyPort}
       ATL_TOMCAT_SCHEME: https
       ATL_TOMCAT_SECURE: true
-skipNodeEmails: true
 
 onInstall:
   - install: 
-      jps: https://raw.githubusercontent.com/vlobzakov/jira/master/scripts/logic.yaml
+      jps: https://raw.githubusercontent.com/vlobzakov/jira/master/scripts/logic.yml
       
   - script: /scripts/idna.js
   - setGlobals:
       DOMAIN: ${response.domain} 
 
-  - install-LE-addon
- 
+  - install-LE-addon 
   - createDB
- 
   - restartContainers[cp]
         
 actions:
- 
   createDB:
      - cmd[${nodes.sqldb.master.id}]: 
          psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.dbName} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
@@ -89,6 +85,5 @@ actions:
         customDomains: ${globals.DOMAIN}
         fallbackToX1: true
 
-startPage: https://${env.domain}
-  
+startPage: https://${env.domain} 
 success: /texts/success-w-db.md
