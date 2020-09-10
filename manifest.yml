@@ -58,8 +58,11 @@ nodes:
       ATL_PROXY_PORT: ${globals.proxyPort}
       ATL_TOMCAT_SCHEME: https
       ATL_TOMCAT_SECURE: true
+      _JAVA_OPTIONS: "-XX:+UseG1GC"
 
 onInstall:
+  - install[cp]:
+      jps: https://github.com/jelastic-jps/java-memory-agent/blob/master/manifest.jps
   - install: 
       jps: https://raw.githubusercontent.com/vlobzakov/jira/master/scripts/logic.yml
       
