@@ -64,9 +64,6 @@ nodes:
 
 
 onInstall:
-  - install[cp]:
-      jps: https://github.com/jelastic-jps/java-memory-agent/blob/master/manifest.jps
-  
   - install: 
       jps: https://raw.githubusercontent.com/vlobzakov/jira/master/scripts/logic.yml
       
