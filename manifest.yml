@@ -31,6 +31,7 @@ globals:
   proxyPort: 443
   baseUrlJA: https://raw.githubusercontent.com/jelastic-jps/java-memory-agent/master/scripts
   homeDir: "/java_agent"
+  setEnv: /opt/atlassian/jira/bin/setenv.sh
   
 ssl: true
 skipNodeEmails: true
@@ -92,7 +93,7 @@ actions:
   
   installJavaAgent:
     - cmd[cp]:
-      - sed -i "s|^JVM_GC_ARGS\=\"-XX:+ExplicitGCInvokesConcurrent\"|#JVM_GC_ARGS\=\"-XX:+ExplicitGCInvokesConcurrent\"|g" /opt/atlassian/jira/bin/setenv.sh
+      - sed -i "s|^JVM_GC_ARGS\=\"-XX:+ExplicitGCInvokesConcurrent\"|#JVM_GC_ARGS\=\"-XX:+ExplicitGCInvokesConcurrent\"|g" ${globals.setEnv}
       - apt-get install -y bc
       - while $(pgrep 'apk|apt|yum' 1> /dev/null); do sleep 1; echo waiting... >> /var/log/run.log 2>&1; done
       - mkdir -p ${globals.homeDir}
