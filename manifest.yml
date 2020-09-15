@@ -29,6 +29,10 @@ globals:
   dbPasswd: ${fn.password}
   protocol: https
   proxyPort: 443
+  baseUrlJA: https://raw.githubusercontent.com/jelastic-jps/java-memory-agent/master/scripts
+  homeDir: "/java_agent"
+  setEnv: /opt/atlassian/jira/bin/setenv.sh
+  
   
 ssl: true
 skipNodeEmails: true
@@ -45,7 +49,7 @@ nodes:
     nodeType: postgres10
     count: 1
 
-  - cloudlets: 22
+  - cloudlets: 32
     nodeGroup: cp
     image: atlassian/jira-software:${settings.jira_version}
     env:
@@ -60,9 +64,9 @@ nodes:
       ATL_TOMCAT_SECURE: true
       _JAVA_OPTIONS: "-XX:+UseG1GC"
 
+
 onInstall:
-  - install[cp]:
-      jps: https://github.com/jelastic-jps/java-memory-agent/blob/master/manifest.jps
+  
   - install: 
       jps: https://raw.githubusercontent.com/vlobzakov/jira/master/scripts/logic.yml
       
@@ -72,6 +76,7 @@ onInstall:
 
   - install-LE-addon 
   - createDB
+  - installJavaAgent
   - restartContainers[cp]
         
 actions:
@@ -87,6 +92,17 @@ actions:
       settings:
         customDomains: ${globals.DOMAIN}
         fallbackToX1: true
+  
+  installJavaAgent:
+    - cmd[cp]:
+      - sed -i "s|^JVM_GC_ARGS\=\"-XX:+ExplicitGCInvokesConcurrent\"|#JVM_GC_ARGS\=\"-XX:+ExplicitGCInvokesConcurrent\"|g" ${globals.setEnv}
+      - while $(pgrep 'apk|apt|yum' 1> /dev/null); do sleep 1; echo waiting... >> /var/log/run.log 2>&1; done
+      - mkdir -p ${globals.homeDir}
+      - wget ${globals.baseUrlJA}/supervisor.sh -O ${globals.homeDir}/java
+      - wget ${globals.baseUrlJA}/memoryConfig.sh -O ${globals.homeDir}/memoryConfig.sh
+      - wget ${globals.baseUrlJA}/variablesparser.sh -O ${globals.homeDir}/variablesparser.sh
+      - wget ${globals.baseUrlJA}/../lib/jelastic-gc-agent.jar -O ${globals.homeDir}/jelastic-gc-agent.jar
+      - "/bin/bash ${globals.homeDir}/java --install >> /var/log/run.log"
 
-startPage: https://${env.domain} 
+startPage: ${globals.protocol}://${env.domain} 
 success: /texts/success-w-db.md
