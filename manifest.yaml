@@ -23,8 +23,8 @@ settings:
   - name: jiraversion
     type: radio-fieldset
     values:
-      long-term-support: Latest <a href="https://confluence.atlassian.com/enterprise/atlassian-enterprise-releases-948227420.html">Long Term Support</a> release 8.5.6
-      latest: Latest release 8.11.0
+      long-term-support: Latest <a href="https://confluence.atlassian.com/enterprise/atlassian-enterprise-releases-948227420.html">Long Term Support</a> release 8.5.8
+      latest: Latest release 8.12.1
     default: latest
     
 globals:
@@ -75,10 +75,10 @@ actions:
   downloadJira:
     - if ('${globals.versionJIRA}' == 'long-term-support'):
         cmd [cp]: |-
-          wget -qO /home/jelastic/jira.bin https://product-downloads.atlassian.com/software/jira/downloads/atlassian-jira-software-8.5.6-x64.bin
+          wget -qO /home/jelastic/jira.bin https://product-downloads.atlassian.com/software/jira/downloads/atlassian-jira-software-8.5.8-x64.bin
     - if ('${globals.versionJIRA}' == 'latest'):
         cmd [cp]: |-
-          wget -qO /home/jelastic/jira.bin https://product-downloads.atlassian.com/software/jira/downloads/atlassian-jira-software-8.11.0-x64.bin
+          wget -qO /home/jelastic/jira.bin https://product-downloads.atlassian.com/software/jira/downloads/atlassian-jira-software-8.12.1-x64.bin
       
   fontconfigInstall:
     cmd [cp]: |-
