@@ -11,7 +11,7 @@ onAfterBindSSL:
          ATL_PROXY_NAME: ${this.domain}
   - restartContainers[cp]
   
-onBeforeStart:
+onBeforeRestartContainer:
   - env.control.AddContainerEnvVars: 
       domain: ${env.domain} 
       nodeGroup: cp
