@@ -3,7 +3,7 @@ appVersion: latest
 id: jira-software
 name: Jira Project & Issue Tracking System
 logo: /images/jira-logo-small.svg
-baseUrl: https://raw.githubusercontent.com/vlobzakov/jira/master
+baseUrl: https://raw.githubusercontent.com/vlobzakov/jira/after-clone
 
 categories:
 - apps/dev-and-admin-tools
