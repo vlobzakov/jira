@@ -44,3 +44,4 @@ onInstall:
         ATL_PROXY_NAME: ${env.domain}
         JVM_MAXIMUM_MEMORY: ${response.out}m
   - env.control.ExecDockerRunCmd[${nodes.cp.join(id,)}]
+  - restartContainers[cp]
