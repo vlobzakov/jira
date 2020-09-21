@@ -20,7 +20,8 @@ onAfterClone:
     envName: ${event.response.env.envName}    
     settings: 
       jira_version: ${settings.jira_version}
-
+  - restartContainers[cp]
+  
 onAfterMigrate:
   - env.control.AddContainerEnvVars:  
       domain: ${event.response.env.domain} 
