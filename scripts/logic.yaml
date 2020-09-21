@@ -21,6 +21,14 @@ onAfterClone:
     settings: 
       jira_version: ${settings.jira_version}
   - restartContainers[cp]
+
+onAfterMigrate:
+  - env.control.AddContainerEnvVars:  
+      domain: ${event.response.env.domain} 
+      nodeGroup: cp
+      vars:
+        ATL_PROXY_NAME: ${event.response.env.domain}
+  - restartContainers[cp]
       
 onAfterSetCloudletCount[cp]:
   - cmd[cp]: free -m | sed -n '2p' | awk '{printf "%.f", $2 * 0.7}'
