@@ -20,21 +20,8 @@ onAfterClone:
     envName: ${event.response.env.envName}    
     settings: 
       jira_version: ${settings.jira_version}
-  - env.control.AddContainerEnvVars:  
-      domain: ${event.response.env.domain} 
-      nodeGroup: cp
-      vars:
-        ATL_PROXY_NAME: ${event.response.env.domain}
-  - env.control.RestartNodes:
-      envName: ${event.response.env.envName}
-      nodeGroup: cp
 
 onAfterMigrate:
-  - script: return {result:0, jps:MANIFEST};
-  - install: ${response.jps}
-    envName: ${event.response.env.envName}    
-    settings: 
-      jira_version: ${settings.jira_version}
   - env.control.AddContainerEnvVars:  
       domain: ${event.response.env.domain} 
       nodeGroup: cp
