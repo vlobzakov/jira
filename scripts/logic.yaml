@@ -23,7 +23,6 @@ onAfterClone:
   - restartContainers[cp]
 
 onAfterMigrate:
-  - script: return {result:0, jps:MANIFEST};
   - env.control.AddContainerEnvVars:  
       domain: ${event.response.env.domain} 
       nodeGroup: cp
