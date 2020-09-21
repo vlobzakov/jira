@@ -20,6 +20,7 @@ onAfterClone:
     envName: ${event.response.env.envName}    
     settings: 
       jira_version: ${settings.jira_version}
+  - restartContainers[cp]
       
 onAfterSetCloudletCount[cp]:
    - cmd[cp]: free -m | sed -n '2p' | awk '{printf "%.f", $2 * 0.7}'
