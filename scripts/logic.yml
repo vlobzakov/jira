@@ -28,14 +28,14 @@ onAfterMigrate:
       nodeGroup: cp
       vars:
         ATL_PROXY_NAME: ${event.response.env.domain}
-   - restartContainers[cp]
+  - restartContainers[cp]
 
 onAfterSetCloudletCount[cp]:
-   - cmd[cp]: free -m | sed -n '2p' | awk '{printf "%.f", $2 * 0.7}'
-   - env.control.AddContainerEnvVars[cp]:
-       vars:
-         JVM_MAXIMUM_MEMORY: ${response.out}m
-   - restartContainers[cp]
+  - cmd[cp]: free -m | sed -n '2p' | awk '{printf "%.f", $2 * 0.7}'
+  - env.control.AddContainerEnvVars[cp]:
+      vars:
+        JVM_MAXIMUM_MEMORY: ${response.out}m
+  - restartContainers[cp]
 
 onInstall:
   - cmd[cp]: free -m | sed -n '2p' | awk '{printf "%.f", $2 * 0.7}'
