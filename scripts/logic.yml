@@ -24,10 +24,10 @@ onAfterClone:
   
 onAfterMigrate:
   - env.control.AddContainerEnvVars:  
-      domain: ${event.response.env.domain} 
+      domain: ${env.domain} 
       nodeGroup: cp
       vars:
-        ATL_PROXY_NAME: ${event.response.env.domain}
+        ATL_PROXY_NAME: ${env.domain}
   - restartContainers[cp]
 
 onAfterSetCloudletCount[cp]:
