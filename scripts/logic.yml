@@ -20,9 +20,8 @@ onAfterClone:
     envName: ${event.response.env.envName}    
     settings: 
       jira_version: ${settings.jira_version}
-  - env.control.RestartNodes:
+  - env.control.RestartNodes [cp]:
       envName: ${event.response.env.envName}
-      nodeGroup: cp
   
 onAfterMigrate:
   - env.control.AddContainerEnvVars:  
