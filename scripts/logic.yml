@@ -20,7 +20,6 @@ onAfterClone:
     envName: ${event.response.env.envName}    
     settings: 
       jira_version: ${settings.jira_version}
-  - restartContainers[cp]
   
 onAfterMigrate:
   - env.control.AddContainerEnvVars:  
@@ -44,4 +43,3 @@ onInstall:
         ATL_PROXY_NAME: ${env.domain}
         JVM_MAXIMUM_MEMORY: ${response.out}m
   - env.control.ExecDockerRunCmd[${nodes.cp.join(id,)}]
-  - restartContainers[cp]
