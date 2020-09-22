@@ -95,7 +95,6 @@ actions:
   
   installJavaAgent:
     - cmd[cp]:
-      - sed -i "s|^JVM_GC_ARGS\=\"-XX:+ExplicitGCInvokesConcurrent\"|#JVM_GC_ARGS\=\"-XX:+ExplicitGCInvokesConcurrent\"|g" ${globals.setEnv}
       - while $(pgrep 'apk|apt|yum' 1> /dev/null); do sleep 1; echo waiting... >> /var/log/run.log 2>&1; done
       - mkdir -p ${globals.homeDir}
       - wget ${globals.baseUrlJA}/supervisor.sh -O ${globals.homeDir}/java
