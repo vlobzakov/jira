@@ -29,10 +29,6 @@ globals:
   dbPasswd: ${fn.password}
   protocol: https
   proxyPort: 443
-  baseUrlJA: https://raw.githubusercontent.com/jelastic-jps/java-memory-agent/master/scripts
-  homeDir: "/java_agent"
-  setEnv: /opt/atlassian/jira/bin/setenv.sh
-  
   
 ssl: true
 skipNodeEmails: true
@@ -76,7 +72,6 @@ onInstall:
 
   - install-LE-addon 
   - createDB
-  - installJavaAgent
   - restartContainers[cp]
         
 actions:
@@ -93,15 +88,5 @@ actions:
         customDomains: ${globals.DOMAIN}
         fallbackToX1: true
   
-  installJavaAgent:
-    - cmd[cp]:
-      - while $(pgrep 'apk|apt|yum' 1> /dev/null); do sleep 1; echo waiting... >> /var/log/run.log 2>&1; done
-      - mkdir -p ${globals.homeDir}
-      - wget ${globals.baseUrlJA}/supervisor.sh -O ${globals.homeDir}/java
-      - wget ${globals.baseUrlJA}/memoryConfig.sh -O ${globals.homeDir}/memoryConfig.sh
-      - wget ${globals.baseUrlJA}/variablesparser.sh -O ${globals.homeDir}/variablesparser.sh
-      - wget ${globals.baseUrlJA}/../lib/jelastic-gc-agent.jar -O ${globals.homeDir}/jelastic-gc-agent.jar
-      - "/bin/bash ${globals.homeDir}/java --install >> /var/log/run.log"
-
 startPage: ${globals.protocol}://${env.domain} 
 success: /texts/success-w-db.md
