@@ -1,12 +1,12 @@
 type: install
 appVersion: latest
 id: jira-software
-name: Jira Project & Issue Tracking System
+name: Jira Software 
 logo: /images/jira-logo-small.svg
-baseUrl: https://raw.githubusercontent.com/vlobzakov/jira/after-clone
+baseUrl: https://raw.githubusercontent.com/vlobzakov/jira/master
 
 categories:
-- apps/dev-and-admin-tools
+  - apps/dev-and-admin-tools
 
 description:
   text: JIRA is a project management software. Your team members can use JIRA to plan, track, and release effective software. You can create problem histories, plan sprints, and assign tasks to your teammates.
@@ -29,11 +29,15 @@ globals:
   dbPasswd: ${fn.password}
   protocol: https
   proxyPort: 443
+  baseUrlJA: https://raw.githubusercontent.com/jelastic-jps/java-memory-agent/master/scripts
+  homeDir: "/java_agent"
+  setEnv: /opt/atlassian/jira/bin/setenv.sh
+  
   
 ssl: true
+skipNodeEmails: true
 
 nodes:
-
   - cloudlets: 4
     count: 1
     nodeGroup: bl
@@ -45,7 +49,7 @@ nodes:
     nodeType: postgres10
     count: 1
 
-  - cloudlets: 22
+  - cloudlets: 32
     nodeGroup: cp
     image: atlassian/jira-software:${settings.jira_version}
     env:
@@ -58,24 +62,24 @@ nodes:
       ATL_PROXY_PORT: ${globals.proxyPort}
       ATL_TOMCAT_SCHEME: https
       ATL_TOMCAT_SECURE: true
-skipNodeEmails: true
+      _JAVA_OPTIONS: "-XX:+UseG1GC"
+
 
 onInstall:
+  
   - install: 
-      jps: https://raw.githubusercontent.com/vlobzakov/jira/after-clone/scripts/logic.yaml
+      jps: https://raw.githubusercontent.com/vlobzakov/jira/master/scripts/logic.yml
       
   - script: /scripts/idna.js
   - setGlobals:
       DOMAIN: ${response.domain} 
 
-  - install-LE-addon
- 
+  - install-LE-addon 
   - createDB
- 
+  - installJavaAgent
   - restartContainers[cp]
         
 actions:
- 
   createDB:
      - cmd[${nodes.sqldb.master.id}]: 
          psql -Uwebadmin postgres -c "CREATE DATABASE ${globals.dbName} WITH ENCODING 'UNICODE' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0;"
@@ -88,7 +92,16 @@ actions:
       settings:
         customDomains: ${globals.DOMAIN}
         fallbackToX1: true
-
-startPage: https://${env.domain}
   
+  installJavaAgent:
+    - cmd[cp]:
+      - while $(pgrep 'apk|apt|yum' 1> /dev/null); do sleep 1; echo waiting... >> /var/log/run.log 2>&1; done
+      - mkdir -p ${globals.homeDir}
+      - wget ${globals.baseUrlJA}/supervisor.sh -O ${globals.homeDir}/java
+      - wget ${globals.baseUrlJA}/memoryConfig.sh -O ${globals.homeDir}/memoryConfig.sh
+      - wget ${globals.baseUrlJA}/variablesparser.sh -O ${globals.homeDir}/variablesparser.sh
+      - wget ${globals.baseUrlJA}/../lib/jelastic-gc-agent.jar -O ${globals.homeDir}/jelastic-gc-agent.jar
+      - "/bin/bash ${globals.homeDir}/java --install >> /var/log/run.log"
+
+startPage: ${globals.protocol}://${env.domain} 
 success: /texts/success-w-db.md
