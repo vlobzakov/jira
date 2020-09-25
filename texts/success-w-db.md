@@ -1,5 +1,7 @@
 **Jira Software application**: [${globals.protocol}://${env.domain}](${globals.protocol}://${env.domain})  
 
+Please be patient, application startup takes time.
+
 Database access credentials:    
   **Hostname**: node${nodes.sqldb.master.id}-${env.domain}  
   **Username**: ${globals.dbUser}  
