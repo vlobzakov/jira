@@ -2,7 +2,7 @@ type: install
 appVersion: latest
 id: jira-software
 name: Jira Software 
-logo: /images/jira-logo-small.svg
+logo: /images/jira-logo-small-centr.svg
 baseUrl: https://raw.githubusercontent.com/vlobzakov/jira/master
 
 categories:
@@ -47,7 +47,7 @@ nodes:
 
   - cloudlets: 32
     nodeGroup: cp
-    image: atlassian/jira-software:${settings.jira_version}
+    image: atlassian/jira-software:8.6
     env:
       ATL_JDBC_USER: ${globals.dbUser}
       ATL_JDBC_PASSWORD: ${globals.dbPasswd}
